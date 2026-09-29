@@ -1,3 +1,8 @@
 # Local Pi runtime state
-.atl/
-.aider/ .amp/ .antigravity/ .claude/ .clinerules/ .codex/ .continue/ .cursor/ .gemini/ .jules/ .junie/ .kiro/ .opencode/ .roo/ .rsc/ .windsurf/ .zed/ .rsc/backups/ .rsc/memory/
+.atl/ .aider/ .amp/ .antigravity/ .claude/ .clinerules/ .codex/ .continue/ .cursor/ .gemini/ .jules/ .junie/ .kiro/ .opencode/ .roo/ .rsc/ .windsurf/ .zed/ .rsc/backups/ .rsc/memory/
+.agents/ .aider/ .amp/ .antigravity/ .codex/ .continue/ .gemini/ .jules/ .junie/ .kiro/ .opencode/ .roo/ .windsurf/ .zed/ .claude/
+# Runtime artifacts (not project files)
+.rsc/ .rsc-state.json .rsc/*.mjs .rsc/*.json
+.docker-compose-fix.md .docker-fix.md
+# GitHub harness artifacts that should not commit to repo root
+.github/agents/ .github/prompts/ .github/rsc/ .github/copilot-instructions.md
