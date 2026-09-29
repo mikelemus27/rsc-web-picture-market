@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "start": "bun run src/index.ts",
+    "test": "bun test tests/usuarios.frontend.api.test.ts",
     "test:suite": "bun run src/index.ts",
     "users:list": "bun run src/listUsers.ts",
     "users:create": "bun run src/createUser.ts",

@@ -12,7 +12,8 @@
   },
   "scripts": {
     "test": "bun test test/usuarios.api.test.ts",
-    "test:full": "TEST_URL=http://localhost:4001 bun test test/usuarios.api.test.ts"
+    "test:full": "TEST_URL=http://localhost:4001 bun test test/usuarios.api.test.ts",
+    "test:tdd": "TEST_URL=http://localhost:4001 bun test test/usuarios.api.test.ts"
   },
   "dependencies": {
     "pg": "^8.20.0"
