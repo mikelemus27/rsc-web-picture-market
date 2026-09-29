@@ -11,7 +11,7 @@ implements ITest {
 
     const response =
       await fetch(
-        "http://localhost:3000/ruta-inexistente"
+        "http://localhost:4001/ruta-inexistente"
       );
 
     const data =

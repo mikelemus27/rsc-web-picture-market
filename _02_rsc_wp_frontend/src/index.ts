@@ -29,7 +29,7 @@ const tablePrinter =
 const apiService =
   new UsuarioApiService(
     httpClient,
-    "http://localhost:3000"
+    process.env.API_URL || "http://localhost:4001"
   );
 
 /*
