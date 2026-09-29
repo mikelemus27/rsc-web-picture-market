@@ -1,0 +1,356 @@
+{
+  "schemaVersion": 1,
+  "id": "20260924-031513-onboard-aider",
+  "createdAt": "2026-09-24T03:15:13.564Z",
+  "operation": "onboard",
+  "target": "aider",
+  "cwd": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market",
+  "cliVersion": "2.0.12",
+  "entries": [
+    {
+      "path": ".aider/rsc/.rsc-state.json",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/.version",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/.base-versions.json",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/.no-context7",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/analyze",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/analyze",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/automation-strategy",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/automation-strategy",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/bro",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/bro",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/clarify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/clarify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/constitution",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/constitution",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/debug",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/debug",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/decision-challenge",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/decision-challenge",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/deprecation",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/deprecation",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/eli5",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/eli5",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/fable-operator",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/fable-operator",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/ftd",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ftd",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/harness",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/harness",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/idea-refinement",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/idea-refinement",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/implement",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/implement",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/init",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/init",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/orient",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/orient",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/parallel",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/parallel",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/plan",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/plan",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/review",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/review",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/sdd",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/sdd",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/sdd-init",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/sdd-init",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/ship",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ship",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/show-me",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/show-me",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/simplify-code",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/simplify-code",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/source-grounded-development",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/source-grounded-development",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/specify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/specify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/suggest",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/suggest",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/tasks",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/tasks",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/ui-engineering",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ui-engineering",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/unslop",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/unslop",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/verify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/verify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".aider/rsc/worktrees",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/worktrees",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": "CONVENTIONS.md",
+      "existed": false,
+      "kind": "missing"
+    }
+  ]
+}

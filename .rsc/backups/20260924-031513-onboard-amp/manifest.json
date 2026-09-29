@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 1,
+  "id": "20260924-031513-onboard-amp",
+  "createdAt": "2026-09-24T03:15:13.667Z",
+  "operation": "onboard",
+  "target": "amp",
+  "cwd": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market",
+  "cliVersion": "2.0.12",
+  "entries": [
+    {
+      "path": ".amp/rsc/.rsc-state.json",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/.version",
+      "existed": true,
+      "kind": "file",
+      "contentPath": "files/.rsc/.version"
+    },
+    {
+      "path": ".rsc/.base-versions.json",
+      "existed": true,
+      "kind": "file",
+      "contentPath": "files/.rsc/.base-versions.json"
+    },
+    {
+      "path": ".rsc/.no-context7",
+      "existed": true,
+      "kind": "file",
+      "contentPath": "files/.rsc/.no-context7"
+    },
+    {
+      "path": ".amp/rsc/analyze",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/analyze",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/analyze"
+    },
+    {
+      "path": ".amp/rsc/automation-strategy",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/automation-strategy",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/automation-strategy"
+    },
+    {
+      "path": ".amp/rsc/bro",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/bro",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/bro"
+    },
+    {
+      "path": ".amp/rsc/clarify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/clarify",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/clarify"
+    },
+    {
+      "path": ".amp/rsc/constitution",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/constitution",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/constitution"
+    },
+    {
+      "path": ".amp/rsc/debug",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/debug",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/debug"
+    },
+    {
+      "path": ".amp/rsc/decision-challenge",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/decision-challenge",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/decision-challenge"
+    },
+    {
+      "path": ".amp/rsc/deprecation",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/deprecation",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/deprecation"
+    },
+    {
+      "path": ".amp/rsc/eli5",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/eli5",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/eli5"
+    },
+    {
+      "path": ".amp/rsc/fable-operator",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/fable-operator",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/fable-operator"
+    },
+    {
+      "path": ".amp/rsc/ftd",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ftd",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/ftd"
+    },
+    {
+      "path": ".amp/rsc/harness",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/harness",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/harness"
+    },
+    {
+      "path": ".amp/rsc/idea-refinement",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/idea-refinement",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/idea-refinement"
+    },
+    {
+      "path": ".amp/rsc/implement",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/implement",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/implement"
+    },
+    {
+      "path": ".amp/rsc/init",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/init",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/init"
+    },
+    {
+      "path": ".amp/rsc/orient",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/orient",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/orient"
+    },
+    {
+      "path": ".amp/rsc/parallel",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/parallel",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/parallel"
+    },
+    {
+      "path": ".amp/rsc/plan",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/plan",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/plan"
+    },
+    {
+      "path": ".amp/rsc/review",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/review",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/review"
+    },
+    {
+      "path": ".amp/rsc/sdd",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/sdd",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/sdd"
+    },
+    {
+      "path": ".amp/rsc/sdd-init",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/sdd-init",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/sdd-init"
+    },
+    {
+      "path": ".amp/rsc/ship",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ship",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/ship"
+    },
+    {
+      "path": ".amp/rsc/show-me",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/show-me",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/show-me"
+    },
+    {
+      "path": ".amp/rsc/simplify-code",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/simplify-code",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/simplify-code"
+    },
+    {
+      "path": ".amp/rsc/source-grounded-development",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/source-grounded-development",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/source-grounded-development"
+    },
+    {
+      "path": ".amp/rsc/specify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/specify",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/specify"
+    },
+    {
+      "path": ".amp/rsc/suggest",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/suggest",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/suggest"
+    },
+    {
+      "path": ".amp/rsc/tasks",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/tasks",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/tasks"
+    },
+    {
+      "path": ".amp/rsc/ui-engineering",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ui-engineering",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/ui-engineering"
+    },
+    {
+      "path": ".amp/rsc/unslop",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/unslop",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/unslop"
+    },
+    {
+      "path": ".amp/rsc/verify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/verify",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/verify"
+    },
+    {
+      "path": ".amp/rsc/worktrees",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/worktrees",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/worktrees"
+    },
+    {
+      "path": "AGENTS.md",
+      "existed": false,
+      "kind": "missing"
+    }
+  ]
+}

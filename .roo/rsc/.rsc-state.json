@@ -1,0 +1,229 @@
+{
+  "skills": {
+    "analyze": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/analyze"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/analyze"
+    },
+    "automation-strategy": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/automation-strategy"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/automation-strategy"
+    },
+    "bro": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/bro"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/bro"
+    },
+    "clarify": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/clarify"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/clarify"
+    },
+    "constitution": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/constitution"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/constitution"
+    },
+    "debug": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/debug"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/debug"
+    },
+    "decision-challenge": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/decision-challenge"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/decision-challenge"
+    },
+    "deprecation": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/deprecation"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/deprecation"
+    },
+    "eli5": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/eli5"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/eli5"
+    },
+    "fable-operator": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/fable-operator"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/fable-operator"
+    },
+    "ftd": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/ftd"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/ftd"
+    },
+    "harness": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/harness"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/harness"
+    },
+    "idea-refinement": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/idea-refinement"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/idea-refinement"
+    },
+    "implement": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/implement"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/implement"
+    },
+    "init": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/init"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/init"
+    },
+    "orient": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/orient"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/orient"
+    },
+    "parallel": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/parallel"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/parallel"
+    },
+    "plan": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/plan"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/plan"
+    },
+    "review": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/review"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/review"
+    },
+    "sdd": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/sdd"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/sdd"
+    },
+    "sdd-init": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/sdd-init"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/sdd-init"
+    },
+    "ship": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/ship"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/ship"
+    },
+    "show-me": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/show-me"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/show-me"
+    },
+    "simplify-code": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/simplify-code"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/simplify-code"
+    },
+    "source-grounded-development": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/source-grounded-development"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/source-grounded-development"
+    },
+    "specify": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/specify"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/specify"
+    },
+    "suggest": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/suggest"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/suggest"
+    },
+    "tasks": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/tasks"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/tasks"
+    },
+    "ui-engineering": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/ui-engineering"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/ui-engineering"
+    },
+    "unslop": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/unslop"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/unslop"
+    },
+    "verify": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/verify"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/verify"
+    },
+    "worktrees": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.roo/rsc/worktrees"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/worktrees"
+    }
+  },
+  "agents": [],
+  "agentCollisions": [],
+  "explicitAgents": [],
+  "memory": {
+    "mode": "unsupported",
+    "reason": "no-local-lifecycle",
+    "paths": []
+  },
+  "policy": {
+    "baseAgents": true,
+    "alwaysOn": true,
+    "codeHooks": true,
+    "gitmojiGuard": true,
+    "memory": true,
+    "context7": false
+  },
+  "commands": [
+    "analyze",
+    "checkpoint",
+    "clarify",
+    "debug",
+    "harness-audit",
+    "implement",
+    "plan",
+    "refactor-clean",
+    "review",
+    "ship",
+    "specify",
+    "tasks",
+    "verify"
+  ],
+  "commandCollisions": [],
+  "version": "2.0.12"
+}

@@ -1,0 +1,242 @@
+{
+  "skills": {
+    "analyze": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/analyze"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/analyze"
+    },
+    "automation-strategy": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/automation-strategy"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/automation-strategy"
+    },
+    "bro": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/bro"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/bro"
+    },
+    "clarify": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/clarify"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/clarify"
+    },
+    "constitution": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/constitution"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/constitution"
+    },
+    "debug": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/debug"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/debug"
+    },
+    "decision-challenge": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/decision-challenge"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/decision-challenge"
+    },
+    "deprecation": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/deprecation"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/deprecation"
+    },
+    "eli5": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/eli5"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/eli5"
+    },
+    "fable-operator": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/fable-operator"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/fable-operator"
+    },
+    "ftd": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/ftd"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/ftd"
+    },
+    "harness": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/harness"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/harness"
+    },
+    "idea-refinement": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/idea-refinement"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/idea-refinement"
+    },
+    "implement": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/implement"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/implement"
+    },
+    "init": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/init"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/init"
+    },
+    "orient": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/orient"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/orient"
+    },
+    "parallel": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/parallel"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/parallel"
+    },
+    "plan": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/plan"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/plan"
+    },
+    "review": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/review"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/review"
+    },
+    "sdd": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/sdd"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/sdd"
+    },
+    "sdd-init": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/sdd-init"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/sdd-init"
+    },
+    "ship": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/ship"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/ship"
+    },
+    "show-me": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/show-me"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/show-me"
+    },
+    "simplify-code": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/simplify-code"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/simplify-code"
+    },
+    "source-grounded-development": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/source-grounded-development"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/source-grounded-development"
+    },
+    "specify": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/specify"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/specify"
+    },
+    "suggest": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/suggest"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/suggest"
+    },
+    "tasks": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/tasks"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/tasks"
+    },
+    "ui-engineering": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/ui-engineering"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/ui-engineering"
+    },
+    "unslop": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/unslop"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/unslop"
+    },
+    "verify": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/verify"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/verify"
+    },
+    "worktrees": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/rsc/worktrees"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/worktrees"
+    }
+  },
+  "agents": [
+    "developer",
+    "refuter-correctness",
+    "refuter-security",
+    "refuter-tests"
+  ],
+  "agentCollisions": [],
+  "explicitAgents": [],
+  "memory": {
+    "mode": "full",
+    "reason": "wired",
+    "paths": [
+      "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/session-memory-core.mjs",
+      "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/session-memory-adapter.mjs",
+      "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/session-memory.mjs",
+      "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.opencode/plugins/rsc-memory.js"
+    ]
+  },
+  "policy": {
+    "baseAgents": true,
+    "alwaysOn": true,
+    "codeHooks": true,
+    "gitmojiGuard": true,
+    "memory": true,
+    "context7": false
+  },
+  "commands": [
+    "analyze",
+    "checkpoint",
+    "clarify",
+    "debug",
+    "harness-audit",
+    "implement",
+    "learn",
+    "plan",
+    "refactor-clean",
+    "resume-session",
+    "review",
+    "save-session",
+    "ship",
+    "specify",
+    "tasks",
+    "verify"
+  ],
+  "commandCollisions": [],
+  "version": "2.0.12"
+}

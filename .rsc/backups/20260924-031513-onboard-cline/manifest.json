@@ -1,0 +1,456 @@
+{
+  "schemaVersion": 1,
+  "id": "20260924-031513-onboard-cline",
+  "createdAt": "2026-09-24T03:15:13.833Z",
+  "operation": "onboard",
+  "target": "cline",
+  "cwd": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market",
+  "cliVersion": "2.0.12",
+  "entries": [
+    {
+      "path": ".clinerules/rsc/.rsc-state.json",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/.version",
+      "existed": true,
+      "kind": "file",
+      "contentPath": "files/.rsc/.version"
+    },
+    {
+      "path": ".rsc/.base-versions.json",
+      "existed": true,
+      "kind": "file",
+      "contentPath": "files/.rsc/.base-versions.json"
+    },
+    {
+      "path": ".rsc/.no-context7",
+      "existed": true,
+      "kind": "file",
+      "contentPath": "files/.rsc/.no-context7"
+    },
+    {
+      "path": ".clinerules/workflows/analyze.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/checkpoint.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/clarify.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/debug.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/harness-audit.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/implement.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/plan.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/refactor-clean.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/review.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/ship.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/specify.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/tasks.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/workflows/verify.md",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".clinerules/rsc/analyze",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/analyze",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/analyze"
+    },
+    {
+      "path": ".clinerules/rsc/automation-strategy",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/automation-strategy",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/automation-strategy"
+    },
+    {
+      "path": ".clinerules/rsc/bro",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/bro",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/bro"
+    },
+    {
+      "path": ".clinerules/rsc/clarify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/clarify",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/clarify"
+    },
+    {
+      "path": ".clinerules/rsc/constitution",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/constitution",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/constitution"
+    },
+    {
+      "path": ".clinerules/rsc/debug",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/debug",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/debug"
+    },
+    {
+      "path": ".clinerules/rsc/decision-challenge",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/decision-challenge",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/decision-challenge"
+    },
+    {
+      "path": ".clinerules/rsc/deprecation",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/deprecation",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/deprecation"
+    },
+    {
+      "path": ".clinerules/rsc/eli5",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/eli5",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/eli5"
+    },
+    {
+      "path": ".clinerules/rsc/fable-operator",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/fable-operator",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/fable-operator"
+    },
+    {
+      "path": ".clinerules/rsc/ftd",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ftd",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/ftd"
+    },
+    {
+      "path": ".clinerules/rsc/harness",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/harness",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/harness"
+    },
+    {
+      "path": ".clinerules/rsc/idea-refinement",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/idea-refinement",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/idea-refinement"
+    },
+    {
+      "path": ".clinerules/rsc/implement",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/implement",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/implement"
+    },
+    {
+      "path": ".clinerules/rsc/init",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/init",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/init"
+    },
+    {
+      "path": ".clinerules/rsc/orient",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/orient",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/orient"
+    },
+    {
+      "path": ".clinerules/rsc/parallel",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/parallel",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/parallel"
+    },
+    {
+      "path": ".clinerules/rsc/plan",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/plan",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/plan"
+    },
+    {
+      "path": ".clinerules/rsc/review",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/review",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/review"
+    },
+    {
+      "path": ".clinerules/rsc/sdd",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/sdd",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/sdd"
+    },
+    {
+      "path": ".clinerules/rsc/sdd-init",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/sdd-init",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/sdd-init"
+    },
+    {
+      "path": ".clinerules/rsc/ship",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ship",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/ship"
+    },
+    {
+      "path": ".clinerules/rsc/show-me",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/show-me",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/show-me"
+    },
+    {
+      "path": ".clinerules/rsc/simplify-code",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/simplify-code",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/simplify-code"
+    },
+    {
+      "path": ".clinerules/rsc/source-grounded-development",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/source-grounded-development",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/source-grounded-development"
+    },
+    {
+      "path": ".clinerules/rsc/specify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/specify",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/specify"
+    },
+    {
+      "path": ".clinerules/rsc/suggest",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/suggest",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/suggest"
+    },
+    {
+      "path": ".clinerules/rsc/tasks",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/tasks",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/tasks"
+    },
+    {
+      "path": ".clinerules/rsc/ui-engineering",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/ui-engineering",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/ui-engineering"
+    },
+    {
+      "path": ".clinerules/rsc/unslop",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/unslop",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/unslop"
+    },
+    {
+      "path": ".clinerules/rsc/verify",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/verify",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/verify"
+    },
+    {
+      "path": ".clinerules/rsc/worktrees",
+      "existed": false,
+      "kind": "missing"
+    },
+    {
+      "path": ".rsc/skills/worktrees",
+      "existed": true,
+      "kind": "dir",
+      "contentPath": "files/.rsc/skills/worktrees"
+    },
+    {
+      "path": ".clinerules/rsc-suggest.md",
+      "existed": false,
+      "kind": "missing"
+    }
+  ]
+}
