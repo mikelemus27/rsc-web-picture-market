@@ -10,7 +10,7 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: REMOVED
-      POSTGRES_DB: escuela
+      POSTGRES_DB: wpm_db
 
     ports:
       - "5433:5433"
@@ -32,7 +32,7 @@ services:
       DB_HOST: postgres
       DB_USER: admin
       DB_PASSWORD: REMOVED
-      DB_NAME: escuela
+      DB_NAME: wpm_db
       DB_PORT: 5432
     depends_on:
       - postgres # Asegura que Postgres inicie primero
