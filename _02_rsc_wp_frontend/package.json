@@ -1,0 +1,22 @@
+{
+  "name": "_01_cli_front_4dockerservices_users",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "test:suite": "bun run src/index.ts",
+    "users:list": "bun run src/listUsers.ts",
+    "users:create": "bun run src/createUser.ts",
+    "users:get": "bun run src/getUserById.ts",
+    "users:update": "bun run src/updateUser.ts",
+    "users:delete": "bun run src/deleteUser.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

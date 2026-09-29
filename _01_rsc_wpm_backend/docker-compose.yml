@@ -1,0 +1,44 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine   # iamgen de  container  postgres
+
+    #container_name: postgres_practica
+
+    restart: always
+
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: REMOVED
+      POSTGRES_DB: escuela
+
+    ports:
+      - "5432:5432"
+
+    volumes:   # donde  se va  aguarda la infromacion de la bd
+      - postgres_data:/var/lib/postgresql/data
+  
+      # Servicio para tu aplicación Bun
+  bun_app: # Nombre del servicio, puedes cambiarlo
+    build: .  
+    image: practica-microservicio-bun:latest # Usa tu imagen construida
+    #container_name: mi-microservicio-bun # Nombre personalizado del contenedor
+    restart: unless-stopped
+    ports:
+      - "3000:3000" # Expone el puerto 3000
+    environment:
+      # Define variables de entorno que tu app necesita para conectarse a Postgres
+      # Ajusta las claves según tu código (DATABASE_URL, DB_HOST, etc.)
+      DB_HOST: postgres
+      DB_USER: admin
+      DB_PASSWORD: REMOVED
+      DB_NAME: escuela
+      DB_PORT: 5432
+    depends_on:
+      - postgres # Asegura que Postgres inicie primero
+    # Si necesitas acceso a tu código fuente para desarrollo (hot-reload):
+    # volumes:
+    #   - ./ruta/a/tu/app:/app
+
+volumes:
+  postgres_data:
