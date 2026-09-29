@@ -13,7 +13,7 @@ services:
       POSTGRES_DB: escuela
 
     ports:
-      - "5433:5432"
+      - "5433:5433"
 
     volumes:   # donde  se va  aguarda la infromacion de la bd
       - postgres_data:/var/lib/postgresql/data
@@ -25,7 +25,7 @@ services:
     #container_name: mi-microservicio-bun # Nombre personalizado del contenedor
     restart: unless-stopped
     ports:
-      - "4001:3000" # Expone el puerto 3000 (cambiado a 4001 en host)
+      - "4001:4001"
     environment:
       # Define variables de entorno que tu app necesita para conectarse a Postgres
       # Ajusta las claves según tu código (DATABASE_URL, DB_HOST, etc.)
@@ -33,7 +33,7 @@ services:
       DB_USER: admin
       DB_PASSWORD: REMOVED
       DB_NAME: escuela
-      DB_PORT: 5432
+      DB_PORT: 5433
     depends_on:
       - postgres # Asegura que Postgres inicie primero
     # Si necesitas acceso a tu código fuente para desarrollo (hot-reload):
