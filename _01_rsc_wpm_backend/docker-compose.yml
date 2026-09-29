@@ -9,7 +9,6 @@ services:
 
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: REMOVED
       POSTGRES_DB: wpm_db
 
     ports:
@@ -31,7 +30,6 @@ services:
       # Ajusta las claves según tu código (DATABASE_URL, DB_HOST, etc.)
       DB_HOST: postgres
       DB_USER: admin
-      DB_PASSWORD: REMOVED
       DB_NAME: wpm_db
       DB_PORT: 5432
     depends_on:
