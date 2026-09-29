@@ -136,13 +136,16 @@ const server = Bun.serve({
           ======================================
           */
 
-          const usuario =
-            await usuarioController.crearUsuario({
-              nombre,
-              email,
+          try {
+            const usuario = await usuarioController.crearUsuario({
+              nombre, email,
             });
-
-          return json(usuario, 201);
+            return json(usuario, 201);
+          } catch (e: any) {
+            const msg = e.message || String(e);
+            if (msg.includes("ya existe")) return json({ error: msg }, 409);
+            return json({ error: msg }, 500);
+          }
         }
 
         /*
