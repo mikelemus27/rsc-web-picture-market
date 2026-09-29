@@ -33,7 +33,7 @@ services:
       DB_USER: admin
       DB_PASSWORD: REMOVED
       DB_NAME: escuela
-      DB_PORT: 5433
+      DB_PORT: 5432
     depends_on:
       - postgres # Asegura que Postgres inicie primero
     # Si necesitas acceso a tu código fuente para desarrollo (hot-reload):
