@@ -5,16 +5,16 @@
 // Arquitectura Hexagonal + Bun + PostgreSQL
 // ======================================================
 
-import { db } from "./infrastructure/database/postgres";
+import { db } from "./infraestructura/database/postgres.ts";
 
 import { UsuarioRepositoryImpl }
-from "./infrastructure/adapters/output/postgresql/UsuarioRepositoryImpl";
+from "./infraestructura/adaptadores/output/postgres_sql/UsuarioRepositoryImpl.ts";
 
 import { UsuarioService }
-from "./application/services/UsuarioService";
+from "./aplicacion/services/UsuarioService.ts";
 
 import { UsuarioController }
-from "./infrastructure/adapters/input/http/UsuarioController";
+from "./infraestructura/adaptadores/input/http/UsuarioController.ts";
 
 /*
 ==================================================
@@ -108,7 +108,7 @@ const server = Bun.serve({
 
         if (method === "POST") {
 
-          const body = await req.json();
+          const body = await req.json() as { nombre?: string; email?: string };
 
           const nombre = body.nombre?.trim();
 
@@ -225,7 +225,7 @@ const server = Bun.serve({
 
         if (method === "PUT") {
 
-          const body = await req.json();
+          const body = await req.json() as { nombre?: string; email?: string };
 
           const nombre = body.nombre?.trim();
 
