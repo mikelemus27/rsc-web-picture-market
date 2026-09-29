@@ -31,6 +31,7 @@
     "eli5",
     "fable-operator",
     "ftd",
+    "git-workflow",
     "harness",
     "idea-refinement",
     "implement",
@@ -60,7 +61,7 @@
     "refuter-tests"
   ],
   "ownSkills": [],
-  "catalogVersion": "2.0.12",
+  "catalogVersion": "2.0.15",
   "tier": null,
   "optOuts": [],
   "onboarding": {
@@ -2873,6 +2874,11 @@
       "AGENTS.md": "012bf2a75676eb3e85bb334c4e2b71c5d21b636572529b50a38b5df947fa1bcb",
       "CONVENTIONS.md": "012bf2a75676eb3e85bb334c4e2b71c5d21b636572529b50a38b5df947fa1bcb",
       "GEMINI.md": "012bf2a75676eb3e85bb334c4e2b71c5d21b636572529b50a38b5df947fa1bcb"
+    },
+    "maintenanceDrift": {
+      "action": "add git-workflow",
+      "recordedAt": "2026-09-29T05:15:28.815Z",
+      "requiresReassessment": true
     }
   }
 }

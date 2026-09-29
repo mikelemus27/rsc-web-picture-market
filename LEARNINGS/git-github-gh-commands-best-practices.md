@@ -123,3 +123,22 @@ Order followed:
 - All tests pass (backend 8/9, frontend 4/5).
 - `.env` local active; secrets never in remote `HEAD`.
 - `env.template` as non-secret reference.
+
+## .github/ directory — what belongs and what does not (best practice)
+
+Good (track):
+- .github/workflows/*.yml (CI/CD)
+- .github/ISSUE_TEMPLATE/ (issue templates)
+- .github/PULL_REQUEST_TEMPLATE
+- .github/SECURITY.md / CONTRIBUTING.md
+- Small project-facing issue notes (if kept local and excluded from external exposure)
+
+Bad (exclude / do not track):
+- .github/agents/ (agent runtime config — internal noise)
+- .github/prompts/ (harness prompts — not repo contribution)
+- .github/rsc/ (harness state — .rsc-state.json, symlinked skills)
+- .github/copilot-instructions.md (assistant-only instructions)
+
+Applied in this repo (via .gitignore):
+  .github/agents/ .github/prompts/ .github/rsc/ excluded
+Real issues live at GitHub Issues (#1 ENV/DB, #2 secrets, #3 PR, #4 TDD) — not required in repo.
