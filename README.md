@@ -6,7 +6,7 @@ A web application to showcase and sell AI-generated pictures, videos, and audio 
 
 Marketplace for AI-generated media (`Picture`, `Video`, `Audio`), with `Product`, `CartItem`, and `Order` entities. Backend uses hexagonal architecture (`Clean Architecture` / ports-adapters); frontend is a `Vue 3` CLI (`test:suite` via `bun run src/index.ts`).
 
-Source of truth for this repo: `AGENTS.md`, `rsc.json`, `02-DOCS/ftd/rsc-web-picture-market.md`, `LEARNINGS/` tutorials.
+Source of truth for this repo: `AGENTS.md`, `02-DOCS/ftd/rsc-web-picture-market.md`, `LEARNINGS/` tutorials.
 
 ## Tech Stack
 
@@ -18,7 +18,6 @@ Source of truth for this repo: `AGENTS.md`, `rsc.json`, `02-DOCS/ftd/rsc-web-pic
 | Frontend CLI | `_02_rsc_wp_frontend/` (`bun`, TypeScript) | `Vue 3` (`package.json`: `test:suite` = `bun run src/index.ts`) |
 | Design tokens / patterns | `tailwind-design-system` skill installed (`.agents/skills/`) | Used for responsive patterns |
 | Review / workflow | `git-flow` skill installed (`.agents/skills/`) | Branch naming (`main`, `fix/`, `feat/`) |
-| Harness | `rsc` (`@ericrisco/rsc` v2.0.15) | `rsc add git-workflow`; `rsc sync --target gemini` |
 | Tests (backend) | `test_debug.ts` (manual fetch) + `test/usuarios.api.test.ts` (TDD `bun:test`) | `TEST_URL=http://localhost:4001` |
 | Tests (frontend) | `tests/usuarios.frontend.api.test.ts` (TDD parallel, moved out of `src/`) | `API_URL=http://localhost:4001` |
 
@@ -189,12 +188,11 @@ Applied (`main` / branches / PR):
 - [x] `package.json` scripts (`test`, `test:full`, `test:tdd`) with `TEST_URL` env
 
 Pending / recommended improvements:
-- [ ] Rotate actual `POSTGRES_PASSWORD` (old `admin123` exposed in `b2767c9`/`d6e47b7` history; assume exposed; `filter-repo` rewrote to `REMOVED` but actual DB should use new secret).
+- [ ] Rotate actual `POSTGRES_PASSWORD` (old assume exposed; `filter-repo` rewrote to `REMOVED` but actual DB should use new secret).
 - [ ] Verify remote `main` pushed (`c394b64` -> `e5d630e` — `main` has docs commit `c394b64`; filter-repo rewrote `main` to `32cd3f7`; `main` currently at `e5d630e` with docs but needs final `push` to sync filter-rewritten branch to `32cd3f7`).
 - [ ] Confirm remote `.env` never committed (`.gitignore` covers `.env` + `.env.local` + `.env.production`).
-- [ ] Add `.github/workflows/ci.yml` (run `test_debug` / `test:full` on PR; block on `admin123` / `password` grep failure).
+- [ ] Add `.github/workflows/ci.yml` (run `test_debug` / `test:full` on PR; block on  `password` grep failure).
 - [ ] Add `docs/SECURITY.md` (rotation procedure; `env.template` reference).
-- [ ] Confirm `.rsc/` artifacts excluded by `.gitignore` and never committed (`.rsc-state.json`, agents, worktrees, skills).
 
 ## Running the application (quick start)
 

@@ -316,3 +316,60 @@ fix(compose): dev/prod split + frontend loop + clean backend compose
 ## 📄 License
 
 Private / Educational Project.
+
+---
+
+## 🏁 Onboarding — Quick Start (from session 2026-09-30 / rsc-web-picture-market)
+
+**What this is:** CLI frontend test client (`_02_rsc_wp_frontend/`) + backend (`_01_rsc_wpm_backend/`) using Bun + PostgreSQL + Docker Compose.
+
+**Directory layout (verified):**
+```
+_01_rsc_wpm_backend/  → backend (Bun + Postgres 16, port 4001)
+_02_rsc_wp_frontend/ → frontend tests (Bun, bind mount .:/app, .env)
+LEARNINGS/docker-microservices-containers-learnings.md  → session notes (fixed version, 187 lines)
+local://docker-compose-dev-vs-prod-plan.md              → approved plan (same content)
+local://paste-1.md                                      → tutorial (ConnectionRefused, .env, network)
+```
+
+**Environment (`_02_rsc_wp_frontend/.env`):** `API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` (container-internal; host tests use `localhost:4001` via override).
+
+**Key fixes applied:**
+- `.dockerignore`: excludes `tests/` from prod image.
+- `Dockerfile`: `CMD ["bun", "test", "./tests/usuarios.frontend.api.test.ts"]` (loop fixed — no `Restarting`).
+- `docker-compose.prod.yml`: lean (no bind mount).
+- `_01_rsc_wpm_backend/docker-compose.yml`: cleaned — only `postgres` + `backend` (removed `frontend` service that duplicated).
+- Network: `rsc-shared` shared bridge (`docker network create rsc-shared`); both on same network → `ConnectionRefused` resolved.
+
+**Prverified commands (use these first, not guesses):**
+```bash
+# 1. Start backend (must be running for frontend)
+cd _01_rsc_wpm_backend && docker compose up -d backend
+
+# 2. Run frontend tests (verified 4 pass / 0 fail / ~82ms)
+docker compose -f ../_02_rsc_wp_frontend/docker-compose.yml run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts
+
+# 3. Interactive / live (after `docker start 02_rsc_wp_bun_vue_frontend` if exited)
+docker exec -it 02_rsc_wp_bun_vue_frontend bun test ./tests/usuarios.frontend.api.test.ts
+
+# 4. Direct host test (backend test, container excludes source)
+cd _01_rsc_wpm_backend && bun test ./test/usuarios.api.test.ts   # 4 pass / 2 fail (GET 500 + POST format)
+```
+
+**Verification checklist:**
+- [ ] `docker ps` shows `01_rsc_wpm_bun_psgres-backend` (`Up`) and `02_rsc_wp_bun_vue_frontend` (`Up` — not `Restarting`).
+- [ ] `docker logs 02_rsc_wp_bun_vue_frontend` shows `bun test` result, not crash loop.
+- [ ] `.env` points to `01_rsc_wpm_bun_psgres-backend:4001` (not `localhost`).
+- [ ] `docker compose run --rm frontend bun test` passes (4 pass) before calling done.
+- [ ] Postgres `wpm_db` online (`pg_isready -U admin -d wpm_db`); table `usuario` exists.
+- [ ] `.dockerignore` excludes `tests/`; `docker build .` produces lean image (no `tests/` in `docker images` layer).
+
+**Reference links:**
+- Plan / durable copy: `local://docker-compose-dev-vs-prod-plan.md`
+- Tutorial (original, now updated by `LEARNINGS/...`): `local://paste-1.md`
+- Session notes (rebuilt, complete): `LEARNINGS/docker-microservices-containers-learnings.md`
+
+**Notes:**
+- `docker compose run --rm frontend bun test` uses the compose `rsc-network`; `docker exec` on a standalone container needs that same network (`rsc-shared` or `external: true` with `name: 01_rsc_wpm_backend_rsc-network`).
+- Backend test (`bun test`) runs at host because multi-stage `Dockerfile` (`production` stage) only includes `dist/`; `tests/` excluded by `.dockerignore`.
+- If `GET /usuarios` returns `500` in backend test: server crash at endpoint (code/DB state issue, separate from docker/network — verify DB connection `DB_HOST=postgres`, table `usuario` exists).
