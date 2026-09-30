@@ -1,44 +1,50 @@
-
 services:
   postgres:
-    image: postgres:16-alpine   # iamgen de  container  postgres
-
-    #container_name: postgres_practica
-
+    image: postgres:16-alpine
     restart: always
-
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-wpm_db}
-
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: wpm_db
     ports:
       - "5433:5433"
-
-    volumes:   # donde  se va  aguarda la infromacion de la bd
+    volumes:
       - postgres_data:/var/lib/postgresql/data
-  
-      # Servicio para tu aplicación Bun
-  bun_app: # Nombre del servicio, puedes cambiarlo
-    build: .  
-    image: practica-microservicio-bun:latest # Usa tu imagen construida
-    #container_name: mi-microservicio-bun # Nombre personalizado del contenedor
+    networks:
+      - rsc-network
+
+  bun_app:
+    build: .
+    container_name: rsc-wpm-backend
     restart: unless-stopped
     ports:
       - "4001:4001"
-    env_file:
-      - ../.env
     environment:
-      DB_HOST: ${DB_HOST:-postgres}
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME:-wpm_db}
-      DB_PORT: ${DB_PORT:-5432}
+      DB_HOST: postgres
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: wpm_db
+      DB_PORT: 5432
     depends_on:
-      - postgres # Asegura que Postgres inicie primero
-    # Si necesitas acceso a tu código fuente para desarrollo (hot-reload):
-    # volumes:
-    #   - ./ruta/a/tu/app:/app
+      - postgres
+    networks:
+      - rsc-network
+
+  frontend:
+    build:
+      context: ../_02_rsc_wp_frontend
+    container_name: rsc-frontend
+    restart: unless-stopped
+    environment:
+      API_URL: http://bun_app:4001
+    depends_on:
+      - bun_app
+    networks:
+      - rsc-network
 
 volumes:
   postgres_data:
+
+networks:
+  rsc-network:
+    driver: bridge
