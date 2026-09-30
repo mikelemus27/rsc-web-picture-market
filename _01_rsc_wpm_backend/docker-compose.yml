@@ -4,25 +4,25 @@ services:
     restart: always
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
+      POSTGRES_PASSWORD: admin123
       POSTGRES_DB: wpm_db
     ports:
-      - "5433:5433"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - rsc-network
 
-  bun_app:
+  backend:
     build: .
-    container_name: rsc-wpm-backend
+    container_name: 01_rsc_wpm_bun_psgres-backend
     restart: unless-stopped
     ports:
       - "4001:4001"
     environment:
       DB_HOST: postgres
       DB_USER: admin
-      DB_PASSWORD: admin
+      DB_PASSWORD: admin123
       DB_NAME: wpm_db
       DB_PORT: 5432
     depends_on:
@@ -30,17 +30,6 @@ services:
     networks:
       - rsc-network
 
-  frontend:
-    build:
-      context: ../_02_rsc_wp_frontend
-    container_name: rsc-frontend
-    restart: unless-stopped
-    environment:
-      API_URL: http://bun_app:4001
-    depends_on:
-      - bun_app
-    networks:
-      - rsc-network
 
 volumes:
   postgres_data:

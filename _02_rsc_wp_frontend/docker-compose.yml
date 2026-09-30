@@ -1,0 +1,18 @@
+services:
+  frontend:
+    build: .
+    container_name: 02_rsc_wp_bun_vue_frontend
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - .:/app
+    networks:
+      - rsc-network
+
+networks:
+  rsc-network: 
+    external: true  #`docker compose run --rm frontend bun test` will run without that warning.
+    name: 01_rsc_wpm_backend_rsc-network
+
+
+

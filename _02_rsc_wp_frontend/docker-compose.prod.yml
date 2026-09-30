@@ -1,0 +1,9 @@
+# Production: lean image, no bind mount, no tests
+services:
+  frontend:
+    build: .
+    container_name: 02_rsc_wp_bun_vue_frontend
+    env_file: .env
+    networks:
+      - rsc-network
+    # No volumes (bind mount excluded) → image is lean (.dockerignore excludes tests/)

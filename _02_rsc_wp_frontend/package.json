@@ -12,7 +12,8 @@
     "users:get": "bun run src/getUserById.ts",
     "users:update": "bun run src/updateUser.ts",
     "users:delete": "bun run src/deleteUser.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "docker:frontend-test": "bun test ./tests/usuarios.frontend.api.test.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"

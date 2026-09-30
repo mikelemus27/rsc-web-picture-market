@@ -191,6 +191,12 @@
         "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/worktrees"
       ],
       "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/worktrees"
+    },
+    "git-workflow": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/git-workflow"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/git-workflow"
     }
   },
   "agents": [
@@ -200,7 +206,12 @@
     "refuter-tests"
   ],
   "agentCollisions": [],
-  "explicitAgents": [],
+  "explicitAgents": [
+    "developer",
+    "refuter-correctness",
+    "refuter-security",
+    "refuter-tests"
+  ],
   "memory": {
     "mode": "unsupported",
     "reason": "no-local-lifecycle",
@@ -230,5 +241,58 @@
     "verify"
   ],
   "commandCollisions": [],
-  "version": "2.0.12"
+  "version": "2.0.15",
+  "ignoreEntriesAdded": [
+    ".github/agents/developer.agent.md",
+    ".github/agents/refuter-correctness.agent.md",
+    ".github/agents/refuter-security.agent.md",
+    ".github/agents/refuter-tests.agent.md",
+    ".github/prompts/analyze.prompt.md",
+    ".github/prompts/checkpoint.prompt.md",
+    ".github/prompts/clarify.prompt.md",
+    ".github/prompts/debug.prompt.md",
+    ".github/prompts/harness-audit.prompt.md",
+    ".github/prompts/implement.prompt.md",
+    ".github/prompts/plan.prompt.md",
+    ".github/prompts/refactor-clean.prompt.md",
+    ".github/prompts/review.prompt.md",
+    ".github/prompts/ship.prompt.md",
+    ".github/prompts/specify.prompt.md",
+    ".github/prompts/tasks.prompt.md",
+    ".github/prompts/verify.prompt.md",
+    ".github/rsc/.rsc-state.json",
+    ".github/rsc/analyze",
+    ".github/rsc/automation-strategy",
+    ".github/rsc/bro",
+    ".github/rsc/clarify",
+    ".github/rsc/constitution",
+    ".github/rsc/debug",
+    ".github/rsc/decision-challenge",
+    ".github/rsc/deprecation",
+    ".github/rsc/eli5",
+    ".github/rsc/fable-operator",
+    ".github/rsc/ftd",
+    ".github/rsc/git-workflow",
+    ".github/rsc/harness",
+    ".github/rsc/idea-refinement",
+    ".github/rsc/implement",
+    ".github/rsc/init",
+    ".github/rsc/orient",
+    ".github/rsc/parallel",
+    ".github/rsc/plan",
+    ".github/rsc/review",
+    ".github/rsc/sdd",
+    ".github/rsc/sdd-init",
+    ".github/rsc/ship",
+    ".github/rsc/show-me",
+    ".github/rsc/simplify-code",
+    ".github/rsc/source-grounded-development",
+    ".github/rsc/specify",
+    ".github/rsc/suggest",
+    ".github/rsc/tasks",
+    ".github/rsc/ui-engineering",
+    ".github/rsc/unslop",
+    ".github/rsc/verify",
+    ".github/rsc/worktrees"
+  ]
 }

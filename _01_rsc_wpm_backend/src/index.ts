@@ -142,6 +142,7 @@ const server = Bun.serve({
         */
 
         if (method === "GET") {
+          console.log("dispatchibg  list of users");
 
           const usuarios =
             await usuarioController.listarUsuarios();

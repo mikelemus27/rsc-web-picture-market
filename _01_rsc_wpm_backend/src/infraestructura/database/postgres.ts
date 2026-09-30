@@ -10,5 +10,5 @@ export const db = new Pool({
   port: Number(process.env.DB_PORT) || 5432,
   user: process.env.DB_USER || "admin",
   password: process.env.DB_PASSWORD || "REMOVED",
-  database: process.env.DB_NAME || "escuela",
+  database: process.env.DB_NAME || "wpm_db",
 });
