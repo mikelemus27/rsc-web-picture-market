@@ -303,7 +303,14 @@ const tests = [
   // ...
 ];
 ```
+30092026
+fix(compose): dev/prod split + frontend loop + clean backend compose
 
+- .dockerignore (tests/), docker-compose.prod.yml (lean)
+- Dockerfile CMD bun test (restart loop fixed)
+- .env API_URL=01_rsc_wpm_bun_psgres-backend:4001 / docker-compose.yml depends_on
+- _01_rsc_wpm_backend/docker-compose: remove frontend service (only postgres+backend)
+- Verified: docker compose run --rm frontend bun test → 4 pass
 ---
 
 ## 📄 License
