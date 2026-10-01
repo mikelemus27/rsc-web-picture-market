@@ -20,7 +20,7 @@ if (args[0] === "--help") {
 const inContainer = args[0] === "--container";
 
 console.log(inContainer
-  ? "Running backend tests inside the Compose backend container..."
+  ? "Running backend tests inside the Compose backend container against http://localhost:4001..."
   : `Running backend tests locally against ${process.env.TEST_URL ?? "http://localhost:4001"}...`);
 
 async function run(command: string[]): Promise<number> {
@@ -49,6 +49,8 @@ if (!inContainer) {
         "-T",
         "-e",
         "TEST_URL=http://localhost:4001",
+        "-e",
+        "API_URL=http://localhost:4001",
         "backend",
         "bun",
         "test",

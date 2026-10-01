@@ -104,6 +104,10 @@ bun run test:all -- --container
 # The test command needs the backend service running in Compose.
 docker compose up -d postgres backend
 
+The local command resolves `localhost:4001` from your machine. With `--container`, it resolves
+inside the backend container; the runner sets both `API_URL` and `TEST_URL` explicitly so the API
+tests use that container's endpoint rather than their local fallback.
+
 # Run the test file directly instead of using the unified runner
 TEST_URL=http://localhost:4001 bun test test/usuarios.api.test.ts
 # Manual (original file, 8/9 pass; GET / 404 expected)

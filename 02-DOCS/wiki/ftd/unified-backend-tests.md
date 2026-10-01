@@ -4,7 +4,7 @@
 Provide one Bun/TypeScript command for running backend API tests locally or inside the running Compose backend container.
 
 ## Scope
-Backend integration tests only. The container mode uses the configured Docker Compose context and mounts test sources read-only; frontend tests and automatic service startup are out of scope.
+Backend integration tests only. The container mode uses the configured Docker Compose context and copies the current test file into the running service; frontend tests and automatic service startup are out of scope.
 
 ## Checklist
 - [x] Add a TypeScript Bun runner with local and container modes; verified with runner help and a local test run (4 passed).
@@ -14,7 +14,7 @@ Backend integration tests only. The container mode uses the configured Docker Co
 ## Evidence
 - `bun run test:all` — 4 passed locally against `http://localhost:4001`.
 - `bun run test:all -- --help` — shows local and container commands.
-- `bun run test:all -- --container` — 4 passed inside the running Compose backend; the copied test file was removed afterward.
+- `bun run test:all -- --container` — 4 passed inside the running Compose backend; explicitly set `API_URL` and `TEST_URL` to `http://localhost:4001`, and removed the copied test file afterward.
 - `docker compose config --quiet` — passed after final Compose changes.
 
 ## Next
