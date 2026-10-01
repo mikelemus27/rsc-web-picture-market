@@ -112,7 +112,7 @@ case "$1" in
     case "${1:-}" in
       "")
         echo -e "${GREEN}=== Running backend tests locally ===${NC}"
-        cd "$REPO_ROOT/_01_rsc_wpm_backend" && bun test ./test/usuarios.api.test.ts 2>&1
+        cd "$REPO_ROOT/_01_rsc_wpm_backend" && bun test ./test/usuarios.backend.api.test.ts 2>&1
         ;;
       --container)
         echo -e "${GREEN}=== Running backend tests inside the container ===${NC}"

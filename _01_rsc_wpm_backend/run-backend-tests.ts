@@ -1,4 +1,4 @@
-const testFile = "test/usuarios.api.test.ts";
+const testFile = "test/usuarios.backend.api.test.ts";
 const args = Bun.argv.slice(2);
 
 if (args.length > 1 || (args.length === 1 && args[0] !== "--container" && args[0] !== "--help")) {
