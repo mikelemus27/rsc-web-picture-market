@@ -10,7 +10,7 @@ services:
     # Give the running container a stable, predictable name for easier debugging and command execution.
     container_name: 02_rsc_wp_bun_vue_frontend
     # Ensure the container restarts automatically if it stops unexpectedly, which helps keep the frontend available during development.
-    restart: unless-stopped
+    restart: "no"
     # Load variables from the .env file so the app can access configuration like ports, API URLs, and secrets without hardcoding them.
     env_file: .env
     # Mount the current project directory into /app inside the container.

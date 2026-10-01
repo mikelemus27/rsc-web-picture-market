@@ -22,3 +22,4 @@ EXPOSE 4001
 # Optional test command kept as a commented example for local validation.
 # This can be uncommented when running frontend tests inside the container.
 #CMD ["bun", "test", "./tests/usuarios.frontend.api.test.ts"]
+CMD ["bun", "test", "./tests/usuarios.frontend.api.test.ts"]

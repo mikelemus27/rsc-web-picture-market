@@ -386,5 +386,16 @@ cd _01_rsc_wpm_backend && bun test ./test/usuarios.api.test.ts   # 4 pass / 2 fa
 ---
 ## 🛠 Project Tools
 
-- ./project-tools/container-management.sh — lifecycle management (start/stop/rebuild/test)
-- Verified: start-all / stop-all / rebuild-all / test-frontend / test-backend / help
+A POSIX-compliant bash script (`project-tools/container-management.sh`) for managing the full container lifecycle without typing long compose commands:
+
+- `start-all`: builds backend (`_01_rsc_wpm_backend/docker-compose.yml`), starts backend (`01_rsc_wpm_bun_psgres-backend`); builds/restarts frontend (`_02_rsc_wp_frontend/docker-compose.yml` with `.env` pointing to `http://01_rsc_wpm_bun_psgres-backend:4001`, `rsc-shared` network, bind mount `.:/app`, `restart: "no"` to prevent loop). Uses `docker compose up -d` with `--no-deps` for frontend.
+- `stop-all`: stops both backend and frontend containers (`docker compose stop` + `docker stop`).
+- `remove-all`: stops and removes all running containers (`docker rm -f`), giving a clean slate.
+- `rebuild-all`: rebuilds images (`docker compose build backend`; `docker compose build --no-cache frontend`) then restarts in order (backend first, frontend second). Handles the case where `bun_app` service name changed to `backend` in compose files.
+- `test-frontend`: runs `docker compose -f _02_rsc_wp_frontend/docker-compose.yml run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts` (verified: 4 pass, 0 fail, ~166ms; uses compose network so `.env` hostname resolves to backend).
+- `test-backend`: changes to `_01_rsc_wpm_backend/` and runs `bun test ./test/usuarios.api.test.ts` (verified: 4 pass, 0 fail, ~72ms; note: multi-stage production `Dockerfile` excludes `tests/`, so backend tests must run at host source or via bind-mount — not inside production image).
+- `help`: lists all actions with descriptions.
+
+Requires: `docker compose`, `docker ps`, `.env` (`API_URL=http://01_rsc_wpm_bun_psgres-backend:4001`), `.dockerignore` (`tests/` excluded from image), `Dockerfile` (`CMD ["bun", "test", ...]` ensures clean exit — loop prevented by `restart: "no"` in compose, not by missing CMD), and shared `rsc-shared` network (`docker network create rsc-shared` or `external: true` with `name: 01_rsc_wpm_backend_rsc-network`). Without shared network, container hostname `01_rsc_wpm_bun_psgres-backend` fails (`ConnectionRefused` / `FailedToOpenSocket`).
+
+Note: The container loop (`Restarting (1)`) was caused by `restart: unless-stopped` combined with `CMD bun test` — the test exits 0, Docker restarts, loop. Fix: `restart: "no"` in compose; `CMD bun test` stays (exit clean). If interactive server needed (Vue future), change `CMD` to persistent server (`bun run src/index.ts`) and restore `restart: unless-stopped`.
