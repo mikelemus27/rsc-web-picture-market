@@ -22,7 +22,7 @@ usage() {
   echo "  rebuild-all     Rebuild images and restart (backend first, then frontend)"
   echo "  restart-frontend Restart frontend only (uses running backend at 4001)"
   echo "  test-frontend   Run frontend tests (verified 4 pass / 0 fail)"
-  echo "  test-backend    Run backend tests (host; 4 pass / 2 fail)"
+  echo "  test-backend [--container] Run backend tests locally or inside the backend container"
   echo "  help          Show this help message"
   exit 1
 }
@@ -105,8 +105,23 @@ case "$1" in
     ;;
 
   test-backend)
-    echo -e "${GREEN}=== Running backend tests ===${NC}"
-    cd "$REPO_ROOT/_01_rsc_wpm_backend" && bun test ./test/usuarios.api.test.ts 2>&1
+    shift
+    if [ "$#" -gt 1 ]; then
+      usage
+    fi
+    case "${1:-}" in
+      "")
+        echo -e "${GREEN}=== Running backend tests locally ===${NC}"
+        cd "$REPO_ROOT/_01_rsc_wpm_backend" && bun test ./test/usuarios.api.test.ts 2>&1
+        ;;
+      --container)
+        echo -e "${GREEN}=== Running backend tests inside the container ===${NC}"
+        cd "$REPO_ROOT/_01_rsc_wpm_backend" && bun run test:all -- --container 2>&1
+        ;;
+      *)
+        usage
+        ;;
+    esac
     ;;
 
   help|*) usage ;;

@@ -103,12 +103,24 @@ bun run test:all -- --container
 
 # The test command needs the backend service running in Compose.
 docker compose up -d postgres backend
+```
 
-The local command resolves `localhost:4001` from your machine. With `--container`, it resolves
-inside the backend container; the runner sets both `API_URL` and `TEST_URL` explicitly so the API
-tests use that container's endpoint rather than their local fallback.
+From the repository root, use the container-management script to run the backend tests locally or
+inside the running Compose backend:
 
-# Run the test file directly instead of using the unified runner
+```bash
+./project-tools/container-management.sh test-backend
+./project-tools/container-management.sh test-backend --container
+```
+
+The local command resolves `localhost:4001` from your machine. With `--container`, the runner
+copies the test file into the backend container and sets `API_URL` and `TEST_URL` to
+`http://localhost:4001` inside that container.
+
+Run the test file directly instead of using the unified runner:
+
+```bash
+cd _01_rsc_wpm_backend
 TEST_URL=http://localhost:4001 bun test test/usuarios.api.test.ts
 # Manual (original file, 8/9 pass; GET / 404 expected)
 TEST_URL=http://localhost:4001 bun run test_debug.ts
@@ -250,7 +262,7 @@ TEST_URL=http://localhost:4001 bun test tests/CreateUsuarioTest.test.ts  # (only
 
 ## 🛠 Container Lifecycle — `project-tools/container-management.sh`
 
-A POSIX-compliant bash script that wraps `docker compose` and `docker` commands. It avoids common errors (`docker compose run --network` syntax confusion → `ConnectionRefused`; `Restarting (1)` loop from `restart: unless-stopped` + `CMD bun test`; isolated `rsc-network` bridges when `.env` points to `localhost`).
+A POSIX shell script that wraps `docker compose` and `docker` commands. It avoids common errors (`docker compose run --network` syntax confusion → `ConnectionRefused`; `Restarting (1)` loop from `restart: unless-stopped` + `CMD bun test`; isolated `rsc-network` bridges when `.env` points to `localhost`).
 
 ### Quick reference (command → result)
 
@@ -259,7 +271,8 @@ A POSIX-compliant bash script that wraps `docker compose` and `docker` commands.
 | `start-all` | Build/restart backend; build/restart frontend (`.env`, `bind mount .:/app`, `rsc-shared`) | Both `Up` via `docker ps` |
 | `rebuild-all` | Full rebuild (`--no-cache` frontend) then restart (handles `bun_app` → `backend` rename) | `4 pass, 0 fail` after |
 | `test-frontend` | `docker compose ... run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts` | `4 pass` (GET 200, POST 201, 404, 400) |
-| `test-backend` | `cd _01_rsc_wpm_backend && bun test ./test/usuarios.api.test.ts` (host; container excludes `tests/`) | `4 pass, 2 fail` |
+| `./project-tools/container-management.sh test-backend` | Run backend tests locally with Bun | Uses the existing local test command |
+| `./project-tools/container-management.sh test-backend --container` | Run `bun run test:all -- --container` against the running Compose backend | `4 pass, 0 fail` |
 | `stop-all` | `docker compose stop` + `docker stop` (clean) | All stopped |
 | `remove-all` | `docker rm -f` all (clean slate) | `docker ps` empty |
 | `help` | Shows actions | — |
@@ -267,6 +280,8 @@ A POSIX-compliant bash script that wraps `docker compose` and `docker` commands.
 ### Requirements (must have before running)
 
 - `docker compose` (v2) + `docker ps` working.
+- For `test-backend --container`, Bun must be installed locally and the Compose `backend` service must be running.
+- The container test option copies the backend API test file into the running backend container; it does not require the production image to include the test directory.
 - `rsc-shared` network (`docker network create rsc-shared` or `external: true` with `name: 01_rsc_wpm_backend_rsc-network`).
 - `.env` inside container (`API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` — container-internal hostname, never `localhost`).
 - `.dockerignore`: excludes `tests/` (production lean image verified with `docker build .` — only `/app/src` layer).
