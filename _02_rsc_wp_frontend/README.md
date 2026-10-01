@@ -383,3 +383,8 @@ cd _01_rsc_wpm_backend && bun test ./test/usuarios.api.test.ts   # 4 pass / 2 fa
 - `docker compose run --rm frontend bun test` uses the compose `rsc-network`; `docker exec` on a standalone container needs that same network (`rsc-shared` or `external: true` with `name: 01_rsc_wpm_backend_rsc-network`).
 - Backend test (`bun test`) runs at host because multi-stage `Dockerfile` (`production` stage) only includes `dist/`; `tests/` excluded by `.dockerignore`.
 - If `GET /usuarios` returns `500` in backend test: server crash at endpoint (code/DB state issue, separate from docker/network — verify DB connection `DB_HOST=postgres`, table `usuario` exists).
+---
+## 🛠 Project Tools
+
+- ./project-tools/container-management.sh — lifecycle management (start/stop/rebuild/test)
+- Verified: start-all / stop-all / rebuild-all / test-frontend / test-backend / help
