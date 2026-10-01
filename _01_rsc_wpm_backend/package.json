@@ -12,6 +12,7 @@
   },
   "scripts": {
     "test": "bun test test/usuarios.api.test.ts",
+    "test:all": "bun run run-backend-tests.ts",
     "test:full": "TEST_URL=http://localhost:4001 bun test test/usuarios.api.test.ts",
     "test:tdd": "TEST_URL=http://localhost:4001 bun test test/usuarios.api.test.ts"
   },

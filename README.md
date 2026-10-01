@@ -93,7 +93,18 @@ docker compose up -d --build
 
 ### Backend tests
 ```bash
-# TDD (parallel file, 4 pass / 0 fail)
+# From the backend directory, run against the local API at localhost:4001
+cd _01_rsc_wpm_backend
+bun run test:all
+
+# Run against the API in the running Compose backend container.
+# Docker Compose uses the current Docker context, including a configured remote context.
+bun run test:all -- --container
+
+# The test command needs the backend service running in Compose.
+docker compose up -d postgres backend
+
+# Run the test file directly instead of using the unified runner
 TEST_URL=http://localhost:4001 bun test test/usuarios.api.test.ts
 # Manual (original file, 8/9 pass; GET / 404 expected)
 TEST_URL=http://localhost:4001 bun run test_debug.ts
@@ -272,4 +283,3 @@ A POSIX-compliant bash script that wraps `docker compose` and `docker` commands.
 - Session notes: `LEARNINGS/docker-microservices-containers-learnings.md`
 - Tutorial (original): `local://paste-1.md` (ConnectionRefused, `.env`, `run --rm`)
 ---
-
