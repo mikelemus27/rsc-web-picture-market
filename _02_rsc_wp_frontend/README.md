@@ -386,7 +386,7 @@ cd _01_rsc_wpm_backend && bun test ./test/usuarios.api.test.ts   # 4 pass / 2 fa
 ---
 ## 🛠 Project Tools
 
-A POSIX-compliant bash script (`project-tools/container-management.sh`) for managing the full container lifecycle without typing long compose commands:
+A POSIX-compliant bash script (`project-tools/container-management.sh`) that wraps the full Docker Compose lifecycle into simple, safe commands — avoiding common errors like `docker compose run --network` syntax confusion (`ConnectionRefused` when using isolated `rsc-network` per stack) and the `Restarting (1)` loop caused by `restart: unless-stopped` combined with `CMD bun test` (test exits 0, Docker restarts, infinite loop). The script handles the correct sequence: build backend first (`_01_rsc_wpm_backend/docker-compose.yml`), then build/restart frontend (`_02_rsc_wp_frontend/docker-compose.yml` with `.env` pointing to `http://01_rsc_wpm_bun_psgres-backend:4001`, bind mount `.:/app`, `rsc-shared` network, `restart: "no"` to prevent loop, `Dockerfile` `CMD ["bun", "test", ...]` for clean exit, `.dockerignore` excluding `tests/` for lean production image).
 
 - `start-all`: builds backend (`_01_rsc_wpm_backend/docker-compose.yml`), starts backend (`01_rsc_wpm_bun_psgres-backend`); builds/restarts frontend (`_02_rsc_wp_frontend/docker-compose.yml` with `.env` pointing to `http://01_rsc_wpm_bun_psgres-backend:4001`, `rsc-shared` network, bind mount `.:/app`, `restart: "no"` to prevent loop). Uses `docker compose up -d` with `--no-deps` for frontend.
 - `stop-all`: stops both backend and frontend containers (`docker compose stop` + `docker stop`).
