@@ -231,3 +231,8 @@ TEST_URL=http://localhost:4001 bun test tests/CreateUsuarioTest.test.ts  # (only
 - `.github/issue_env_secrets.md` — Issue #2 (security audit).
 - `.github/issue_env_db_ports.md` — Issue #1 (ENV/DB mapping; port `5432` internal, `4001` backend).
 - `.github/issue_refactor_tdd_frontend.md` — Issue #6 (TDD frontend).
+--- << Project Tools explanation >> ---
+
+The project uses ./project-tools/container-management.sh (POSIX sh) for container lifecycle (start-all / stop-all / rebuild-all / test-frontend / test-backend / help).
+Verified: docker compose run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts => 4 pass, 0 fail.
+Requires: .env (API_URL=http://01_rsc_wpm_bun_psgres-backend:4001), .dockerignore (tests/), Dockerfile CMD (bun test), rsc-shared network.
