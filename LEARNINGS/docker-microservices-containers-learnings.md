@@ -143,12 +143,28 @@ docker run -d --name 02_rsc_wp_bun_vue_frontend --network rsc-shared \
   --env-file _02_rsc_wp_frontend/.env 02_rsc_wp_frontend-frontend
 ```
 
-### 4.2 Ejecutar tests de frontend (verificado 4 pass)
+### 4.2 Ejecutar tests de frontend dentro del container(verificado 4 pass)
 ```bash
 docker compose run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts
 ```
 Resultado observado: `4 pass, 0 fail, 5 expect() calls, Ran 4 tests across 1 file. [82.00ms]`.
 Nota: `docker compose run --rm` es la forma correcta (no `--network`; el servicio ya está en la red definida en `docker-compose.yml`).
+
+#### Cómo interpretar la salida del comando
+
+Comando ejecutado desde la raíz del repositorio:
+```bash
+docker compose -f _02_rsc_wp_frontend/docker-compose.yml run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts
+```
+
+- `-f _02_rsc_wp_frontend/docker-compose.yml` le indica a Compose qué archivo define el servicio `frontend`.
+- `run --rm frontend` crea un contenedor temporal para ese servicio y lo elimina al terminar. No elimina la imagen ni detiene el backend.
+- `bun test ./tests/usuarios.frontend.api.test.ts` ejecuta ese archivo de pruebas dentro del contenedor usando Bun.
+- `Remote API responded; using http://01_rsc_wpm_bun_psgres-backend:4001.` confirma que el chequeo inicial alcanzó el backend y seleccionó la URL configurada en `API_URL`. Como el test está dentro de Docker, usa el nombre del backend en la red compartida; `localhost` dentro del contenedor se referiría al propio contenedor frontend.
+- Los cuatro casos comprobaron: `GET /usuarios` devuelve `200` y un arreglo; `POST /usuarios` devuelve un estado permitido; una ruta inexistente devuelve `404`; y un ID no numérico devuelve `400`.
+- `4 pass, 0 fail` indica que las cuatro pruebas terminaron pasando. `5 expect() calls` cuenta las comprobaciones de aserción ejecutadas dentro de esas pruebas.
+
+**Importante:** el test de `POST /usuarios` acepta `201`, `409` o `500`. Por eso su aprobación solo confirma que el estado recibido está en esa lista; no confirma necesariamente que el usuario se haya creado correctamente. Si se requiere garantizar la creación, el test debe esperar `201` y comprobar el cuerpo de respuesta.
 
 ### 4.3 Ver logs / estado
 ```bash

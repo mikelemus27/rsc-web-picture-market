@@ -1,17 +1,36 @@
+# This file defines the frontend container for the Bun + Vue application.
+# It tells Docker how to build and run the frontend service, how it should use local files and environment variables,
+# and how it connects to the shared project network so it can communicate with backend services during development.
 services:
+  # The frontend service is the app container that runs the UI code.
+  # In Docker Compose, this is the logical name used when starting, stopping, and running commands against the container.
   frontend:
+    # Build the image from the Dockerfile in the current directory so the app is packaged with its dependencies.
     build: .
+    # Give the running container a stable, predictable name for easier debugging and command execution.
     container_name: 02_rsc_wp_bun_vue_frontend
+    # Ensure the container restarts automatically if it stops unexpectedly, which helps keep the frontend available during development.
     restart: unless-stopped
+    # Load variables from the .env file so the app can access configuration like ports, API URLs, and secrets without hardcoding them.
     env_file: .env
+    # Mount the current project directory into /app inside the container.
+    # This keeps the container in sync with local source files so changes made on the host are immediately available in the app.
     volumes:
       - .:/app
+    # Attach the frontend to the shared Docker network so it can discover and reach backend containers on the same project network.
     networks:
       - rsc-network
 
+# This section defines the shared network used across the project.
+# Instead of creating a brand-new network for every service, Docker Compose reuses an existing project network so related containers can communicate reliably.
 networks:
-  rsc-network: 
-    external: true  #`docker compose run --rm frontend bun test` will run without that warning.
+  # The shared network name used by this frontend service.
+  # Multiple services in the same project can connect to it so they act like one application environment.
+  rsc-network:
+    # Mark the network as external to reuse the backend-created network instead of creating a duplicate.
+    # This avoids network warnings and keeps the frontend aligned with the rest of the application stack.
+    external: true  # This avoids warnings when using `docker compose run --rm frontend bun test`.
+    # The exact name of the pre-existing backend network that this frontend should join.
     name: 01_rsc_wpm_backend_rsc-network
 
 

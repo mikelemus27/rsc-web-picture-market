@@ -1,9 +1,17 @@
-# Production: lean image, no bind mount, no tests
+# This production Compose file is optimized for deployment instead of local development.
+# It builds a lean runtime image, avoids mounting the source tree into the container, and keeps the app connected to the shared project network so it can reach backend services without extra configuration.
 services:
+  # The frontend service in production runs the built app as a standalone container.
+  # Unlike the development configuration, this version is intentionally stripped down to reduce runtime overhead and keep the image small.
   frontend:
+    # Build the container image from the current directory using the production-oriented Dockerfile setup.
     build: .
+    # Use a fixed container name so the running instance is easy to identify and manage with Docker commands.
     container_name: 02_rsc_wp_bun_vue_frontend
+    # Load environment variables from the local .env file so runtime config is kept outside the image.
     env_file: .env
+    # Attach the container to the shared project network so it can discover and communicate with other services such as the backend.
     networks:
       - rsc-network
-    # No volumes (bind mount excluded) → image is lean (.dockerignore excludes tests/)
+    # No bind mount is used here.
+    # This keeps the production container self-contained and lean, while the .dockerignore file excludes unnecessary files such as tests to reduce image size.
