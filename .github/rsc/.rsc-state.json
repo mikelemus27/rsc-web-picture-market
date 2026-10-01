@@ -197,6 +197,12 @@
         "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/git-workflow"
       ],
       "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/git-workflow"
+    },
+    "technical-writing": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/technical-writing"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/technical-writing"
     }
   },
   "agents": [
@@ -290,6 +296,7 @@
     ".github/rsc/specify",
     ".github/rsc/suggest",
     ".github/rsc/tasks",
+    ".github/rsc/technical-writing",
     ".github/rsc/ui-engineering",
     ".github/rsc/unslop",
     ".github/rsc/verify",

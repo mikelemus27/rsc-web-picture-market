@@ -757,3 +757,54 @@
 .zed/rsc/git-workflow
 .zed/rsc/.rsc-state.json
 .atl/
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.aider/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.amp/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.antigravity/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.claude/skills/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.clinerules/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.codex/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.continue/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.github/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.cursor/rules/technical-writing.mdc
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.gemini/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.jules/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.junie/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.kiro/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.opencode/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.roo/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.windsurf/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.zed/rsc/technical-writing

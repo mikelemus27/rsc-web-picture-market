@@ -49,6 +49,7 @@
     "specify",
     "suggest",
     "tasks",
+    "technical-writing",
     "ui-engineering",
     "unslop",
     "verify",
@@ -2876,8 +2877,8 @@
       "GEMINI.md": "012bf2a75676eb3e85bb334c4e2b71c5d21b636572529b50a38b5df947fa1bcb"
     },
     "maintenanceDrift": {
-      "action": "add git-workflow",
-      "recordedAt": "2026-09-29T05:15:28.815Z",
+      "action": "add technical-writing",
+      "recordedAt": "2026-10-01T17:56:20.920Z",
       "requiresReassessment": true
     }
   }
