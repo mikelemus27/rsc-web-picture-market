@@ -233,6 +233,43 @@ TEST_URL=http://localhost:4001 bun test tests/CreateUsuarioTest.test.ts  # (only
 - `.github/issue_refactor_tdd_frontend.md` — Issue #6 (TDD frontend).
 --- << Project Tools explanation >> ---
 
-The project uses ./project-tools/container-management.sh (POSIX sh) for container lifecycle (start-all / stop-all / rebuild-all / test-frontend / test-backend / help).
-Verified: docker compose run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts => 4 pass, 0 fail.
-Requires: .env (API_URL=http://01_rsc_wpm_bun_psgres-backend:4001), .dockerignore (tests/), Dockerfile CMD (bun test), rsc-shared network.
+## 🛠 Container Lifecycle — `project-tools/container-management.sh`
+
+A POSIX-compliant bash script that wraps `docker compose` and `docker` commands. It avoids common errors (`docker compose run --network` syntax confusion → `ConnectionRefused`; `Restarting (1)` loop from `restart: unless-stopped` + `CMD bun test`; isolated `rsc-network` bridges when `.env` points to `localhost`).
+
+### Quick reference (command → result)
+
+| Command | What it does | Verified result |
+|---|---|---|
+| `start-all` | Build/restart backend; build/restart frontend (`.env`, `bind mount .:/app`, `rsc-shared`) | Both `Up` via `docker ps` |
+| `rebuild-all` | Full rebuild (`--no-cache` frontend) then restart (handles `bun_app` → `backend` rename) | `4 pass, 0 fail` after |
+| `test-frontend` | `docker compose ... run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts` | `4 pass` (GET 200, POST 201, 404, 400) |
+| `test-backend` | `cd _01_rsc_wpm_backend && bun test ./test/usuarios.api.test.ts` (host; container excludes `tests/`) | `4 pass, 2 fail` |
+| `stop-all` | `docker compose stop` + `docker stop` (clean) | All stopped |
+| `remove-all` | `docker rm -f` all (clean slate) | `docker ps` empty |
+| `help` | Shows actions | — |
+
+### Requirements (must have before running)
+
+- `docker compose` (v2) + `docker ps` working.
+- `rsc-shared` network (`docker network create rsc-shared` or `external: true` with `name: 01_rsc_wpm_backend_rsc-network`).
+- `.env` inside container (`API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` — container-internal hostname, never `localhost`).
+- `.dockerignore`: excludes `tests/` (production lean image verified with `docker build .` — only `/app/src` layer).
+- `docker-compose.yml`: `restart: "no"` (prevents loop); `volumes: [.:/app]` (bind mount for live source); `env_file: .env`.
+- `docker-compose.prod.yml`: lean (no volumes); image built from `.dockerignore` only.
+- `Dockerfile`: `CMD ["bun", "test", ...]` stays (loop prevented by compose, not missing `CMD`); future Vue server needs persistent `CMD` (`bun run src/index.ts`) + `restart: unless-stopped`.
+
+### Why the errors occurred (and how the script fixes them)
+
+- `ConnectionRefused` / `FailedToOpenSocket`: caused by `.env` using `localhost` or isolated `rsc-network`; fix = shared bridge + correct `.env` hostname.
+- `Restarting (1)` loop: `restart: unless-stopped` + `CMD bun test` (test exits 0, Docker restarts); fix = `restart: "no"`.
+- `docker compose run --network ...` syntax error: invalid flag; fix = rely on compose-defined `rsc-network` (no `--network` needed in `run`).
+- `tests/` missing inside container (multi-stage production `Dockerfile`): fix = run backend tests at host (`bun test ./test/usuarios.api.test.ts`) or use bind-mounted dev container.
+
+### See also
+
+- Full plan: `local://docker-compose-dev-vs-prod-plan.md`
+- Session notes: `LEARNINGS/docker-microservices-containers-learnings.md`
+- Tutorial (original): `local://paste-1.md` (ConnectionRefused, `.env`, `run --rm`)
+---
+
