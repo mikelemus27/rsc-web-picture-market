@@ -124,21 +124,49 @@ Order followed:
 - `.env` local active; secrets never in remote `HEAD`.
 - `env.template` as non-secret reference.
 
-## .github/ directory — what belongs and what does not (best practice)
+## Track shared GitHub templates, rules, and skills
 
-Good (track):
-- .github/workflows/*.yml (CI/CD)
-- .github/ISSUE_TEMPLATE/ (issue templates)
-- .github/PULL_REQUEST_TEMPLATE
-- .github/SECURITY.md / CONTRIBUTING.md
-- Small project-facing issue notes (if kept local and excluded from external exposure)
+Track files that the team needs GitHub or a fresh checkout to use. Git records files, not empty
+directories, so add the actual template, workflow, or rule file.
 
-Bad (exclude / do not track):
-- .github/agents/ (agent runtime config — internal noise)
-- .github/prompts/ (harness prompts — not repo contribution)
-- .github/rsc/ (harness state — .rsc-state.json, symlinked skills)
-- .github/copilot-instructions.md (assistant-only instructions)
+Good to track when they are intended for the whole project:
+- `.github/workflows/` — CI/CD workflows.
+- `.github/ISSUE_TEMPLATE/` and `.github/ISSUE_TEMPLATE/config.yml` — issue forms and routing.
+- `.github/pull_request_template.md` or `.github/PULL_REQUEST_TEMPLATE/` — default PR template(s).
+- `.github/SECURITY.md`, `CONTRIBUTING.md`, and shared project instructions such as `AGENTS.md`
+  or `.github/copilot-instructions.md`.
+- A canonical project skill under the skill source directory used by the team, such as
+  `.agents/skills/<skill-name>/`, when teammates need the skill and its source is appropriate to
+  distribute.
 
-Applied in this repo (via .gitignore):
-  .github/agents/ .github/prompts/ .github/rsc/ excluded
-Real issues live at GitHub Issues (#1 ENV/DB, #2 secrets, #3 PR, #4 TDD) — not required in repo.
+GitHub uses a default issue or PR template when the relevant file is committed to the repository's
+default branch. A template only on someone's machine or on an unmerged feature branch is not yet
+available as the repository default. A feature branch can carry the template temporarily, but the
+template must reach the default branch to become the shared default.
+
+Do not track these automatically:
+- Per-editor links or generated adapters that point to a canonical skill, for example symlinks
+  created under `.claude/`, `.cursor/`, `.github/rsc/`, or similar integration directories.
+- Harness state, caches, logs, machine-specific paths, local preferences, and credentials.
+- A skill copied from an external source before checking its license, provenance, update model, and
+  whether the team actually intends to maintain and share it.
+
+Keep canonical skill content separate from generated integration files. Track team-owned source
+when it is meant to be reproducible; ignore generated runtime state and local editor wiring.
+Likewise, include assistant instructions when they express project conventions that contributors
+need, rather than excluding them merely because an assistant reads them.
+
+Before committing an installed skill or rule, inspect `git status --short` and the exact diff.
+Stage specific intended paths instead of using `git add -A` when installation may have generated
+files for several editors.
+
+Applied in this repo:
+- `.github/ISSUE_TEMPLATE/feature_request.yml` is committed on `main`, so GitHub can use it for new
+  issues.
+- `.github/pull_request_template.md` was created locally but is not yet tracked or on `main`; keep
+  it in a commit and merge it to `main` before expecting GitHub to use it for future PRs.
+- `readme-wizard` is present under `.agents/skills/`; `technical-writing` was installed through the
+  RSC harness. Check each skill's canonical source and generated editor links before deciding what
+  to commit.
+- Existing Git ignores RSC state and several agent integration directories; preserve those local
+  exclusions unless a specific project-owned source file is intentionally being shared.
