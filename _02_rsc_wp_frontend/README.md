@@ -37,7 +37,17 @@ This project serves as an automated test harness and terminal-based frontend cli
 
 ---
 
-## ✨ Key Features
+---
+## 📝 Note on Container Lifecycle (Test vs Live App)
+
+**Current state (CLI test client)**: The container runs `bun test` (via `Dockerfile` `CMD`) and exits cleanly after the suite (`4 pass / 0 fail`). It does **not** stay running (`restart: "no"` in `docker-compose.yml`) because this frontend is only a test harness fetching the backend API (`http://01_rsc_wpm_bun_psgres-backend:4001`).
+
+**When evolving to an actual Vue/React app**: The container must become a **live server** (e.g., `bun run src/index.ts`, `CMD ["bun", "serve", "src/index.html"]`, or `npm run dev` with a persistent web server). At that point:
+- Change `Dockerfile` `CMD` to start the server (not `bun test`).
+- Set `restart: unless-stopped` (or `always`) in `docker-compose.yml`.
+- Expose the app port (e.g., `ports: - "3000:3000"`) so the host/browser can reach it.
+- The `.env` (`API_URL`) is only for tests; a live Vue frontend would serve static assets or proxy to backend separately — this CLI is decoupled from that architecture.
+---
 
 - **Automated Test Orchestrator (`TestRunner`)**: Sequentially executes test instances, catches runtime exceptions, and collects standardized test metrics (`TTestResult`).
 - **Tabular & Summary Visualizers**:
