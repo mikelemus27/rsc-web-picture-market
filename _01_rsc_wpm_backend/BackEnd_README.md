@@ -257,15 +257,7 @@ ON CONFLICT (email) DO NOTHING;
    docker compose up -d --build
    ```
 
-2. **Initialize the table (if running for the first time):**
-   ```bash
-   docker compose exec postgres psql -U admin -d escuela -c "
-   CREATE TABLE IF NOT EXISTS usuario (
-       id SERIAL PRIMARY KEY,
-       nombre VARCHAR(100) NOT NULL,
-       email VARCHAR(100) UNIQUE NOT NULL
-   );"
-   ```
+2. **Initialize the database:** On the first start with a new PostgreSQL volume, Compose applies `db/init/01-schema.sql` automatically. Existing database volumes are preserved and are not changed by this init hook.
 
 3. **Check container status and logs:**
    ```bash

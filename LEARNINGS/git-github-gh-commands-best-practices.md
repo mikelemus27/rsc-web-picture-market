@@ -2,6 +2,8 @@
 
 Project: rsc-web-picture-market (mikelemus27/rsc-web-picture-market). Created during `fix/env-secrets` session.
 
+This file records historical commands and outcomes. Check the current repository state before relying on branch, security, issue, or pull request status.
+
 ## 1. Branch naming (industry standard)
 
 ```bash
@@ -31,14 +33,15 @@ Achieved: `git status --short` now clean; `.env` never pushed.
 Practice: `POSTGRES_PASSWORD`, `DB_PASSWORD` never in `docker-compose.yml` as literals.
 Instead: `env_file: ../.env` + `${POSTGRES_PASSWORD}` (no `-default`).
 Local `.env` exists but is excluded; `env.template` is referenced template.
-Achieved: `admin123` removed from all branches (`git-filter-repo`); `0 hits` on remote.
+Achieved at the time: the exposed database credential was removed from rewritten branch history; remote history then reported no matches.
 
 ## 4. `git filter-repo` (rewriting history safely)
 
 Used: `git-filter-repo --replace-text /tmp/filter-expr.txt --force --partial`
-Expression: `admin123==>REMOVED`
+Expression: `<exposed-credential>==>REMOVED`
 Warning: rewrites all commit hashes (`main` moved to `32cd3f7`). Must force-push all branches.
-Achieved: `git log --all --full-history -S 'admin123'` = 0 hits.
+Achieved at the time: `git log --all --full-history -S '<exposed-credential>'` returned 0 matches.
+Important: history rewriting does not rotate exposed credentials. Rotate them separately and verify the current Compose files.
 
 ## 5. Force-push after history rewrite (with authorization)
 
@@ -102,7 +105,7 @@ Backend: 8/9 pass (expected `GET /` 404 — no root route). Frontend: 4/5 pass (
 ## 11. `.env` / secret fix sequence
 
 Order followed:
-1. Identify leak (`docker-compose.yml` with `admin123`).
+1. Identify plaintext credentials in a tracked Compose file.
 2. Create issue (#2).
 3. Create branch `fix/env-secrets`.
 4. Apply `env.template` + `.gitignore` + `docker-compose.yml` variable substitution.
@@ -111,13 +114,13 @@ Order followed:
 7. Verify tests pass.
 8. Commit (but accidentally included `.env`; removed via `git rm --cached` + amend).
 9. Push branch (manual, blocked by policy).
-10. Run `git-filter-repo` on all branches to purge `admin123` from history.
+10. Run `git-filter-repo` on all branches to remove the exposed value from history.
 11. Force-push all branches (manual, blocked by policy — completed).
 12. Create PR #3; assign human reviewer (manual, GitHub limits author-as-reviewer).
 
 ## What was achieved (summary)
 
-- `main` at `32cd3f7`: clean history (no `admin123`), `.env` excluded, compose uses secure `env_file` + variables.
+- At the time of this record, `main` was reported at `32cd3f7` after a history rewrite. This does not establish current remote history or credential safety.
 - `fix/env-secrets`: same clean state, PR #3 open.
 - `fix/service-architecture`: merged into `main`; DB `wpm_db` active.
 - All tests pass (backend 8/9, frontend 4/5).
@@ -163,8 +166,7 @@ files for several editors.
 Applied in this repo:
 - `.github/ISSUE_TEMPLATE/feature_request.yml` is committed on `main`, so GitHub can use it for new
   issues.
-- `.github/pull_request_template.md` was created locally but is not yet tracked or on `main`; keep
-  it in a commit and merge it to `main` before expecting GitHub to use it for future PRs.
+- `.github/pull_request_template.md` is tracked in the current checkout. GitHub uses it as the default PR template when it is present on the repository's default branch.
 - `readme-wizard` is present under `.agents/skills/`; `technical-writing` was installed through the
   RSC harness. Check each skill's canonical source and generated editor links before deciding what
   to commit.

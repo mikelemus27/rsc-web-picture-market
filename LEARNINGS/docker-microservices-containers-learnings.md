@@ -1,7 +1,7 @@
-# Tutorial: Backend + Frontend con Docker Compose
+# Docker Compose: Backend and Frontend Learnings
 _Errores reales, causas y soluciones reutilizables — proyecto rsc-web-picture-market_
 
-Documento de referencia rápida para conectar backend (Bun + PostgreSQL) y frontend (Bun + tests de contrato).
+Historical operational notes for connecting the Bun backend, PostgreSQL, and frontend API tests. Compose settings and test outcomes change; inspect the current files and rerun commands before treating a snapshot below as current.
 
 ---
 
@@ -45,9 +45,17 @@ Reglas clave:
 **Solución (para dev):** usar `docker compose run --rm backend bun test ...` con bind-mount o host local (archivo existe en directorio `_01_rsc_wpm_backend/test/`). No modificar imagen prod (de propósito lean).
 **Resultado:** `2 pass, 2 fail` en host (`GET /usuarios` da 500 por código/DB; `POST` afirma formato); 2 pasan (`404`, `400`).
 
+### 2.5 API tests fail because the PostgreSQL schema is missing
+**Síntoma:** backend and frontend contract suites both failed: `GET /usuarios` returned HTTP 500 and the backend log reported PostgreSQL error `42P01`, `relation "usuario" does not exist`.
+**Aislamiento:** `psql -U admin -d wpm_db -c '\dt'` showed no relations. The backend was reachable, so changing network settings would not fix this failure.
+**Causa:** PostgreSQL had initialized the database but no application table had been created. A healthy database connection does not imply that the application schema exists.
+**Solución:** add an idempotent `usuario` table script under `_01_rsc_wpm_backend/db/init/` and mount it into `/docker-entrypoint-initdb.d/` for new database volumes. Apply a schema change to an existing volume with a migration or explicit SQL; do not delete the volume to trigger initialization again.
+**Verificado:** created the table in the current volume without removing it; backend and frontend suites each reported `4 pass, 0 fail`. The automatic init path on a newly created volume was not exercised.
+**Más detalles:** [PostgreSQL learnings](./postgresql-learnings.md).
+
 ---
 
-## 3. Configuración final (verificada)
+## 3. Configuration snapshots from earlier verification
 
 ### 3.1 `.env` (frontend)
 ```env

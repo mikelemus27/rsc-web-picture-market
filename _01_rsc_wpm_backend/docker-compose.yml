@@ -1,39 +1,65 @@
+# Backend development stack: PostgreSQL stores user data, and the Bun API
+# connects to it over the Compose network.
 services:
+  # The database is published on the host for local tools and keeps its data
+  # in a named volume so ordinary container recreation does not erase it.
   postgres:
     image: postgres:16-alpine
     restart: always
     environment:
       POSTGRES_USER: admin
+      # These development credentials are inline; replace them with ignored
+      # environment configuration or secrets before sharing or deploying.
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: wpm_db
     ports:
+      # Host port 5432 forwards to PostgreSQL's standard port inside the container.
       - "5432:5432"
     volumes:
+      # Persist database files independently of the PostgreSQL container.
       - postgres_data:/var/lib/postgresql/data
+      # The image runs this schema script only when initializing an empty data directory.
+      - ./db/init/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      # Mark the service healthy when PostgreSQL accepts connections to wpm_db.
+      test: ["CMD-SHELL", "pg_isready -U admin -d wpm_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
     networks:
       - rsc-network
 
+  # Build and run the API. It reaches PostgreSQL by the service name "postgres",
+  # using the database's internal port rather than its host-published port.
   backend:
     build: .
     container_name: 01_rsc_wpm_bun_psgres-backend
     restart: unless-stopped
     ports:
+      # Publish the API on the same port used by the Bun server in the container.
       - "4001:4001"
     environment:
       DB_HOST: postgres
       DB_USER: admin
+      # Use development credentials here; keep production credentials external.
       DB_PASSWORD: admin123
       DB_NAME: wpm_db
       DB_PORT: 5432
     depends_on:
-      - postgres
+      # Starting after PostgreSQL is healthy avoids connecting before it accepts
+      # connections; this does not replace schema migrations for existing volumes.
+      postgres:
+        condition: service_healthy
     networks:
       - rsc-network
 
 
+# Named volumes outlive container recreation and preserve the database contents.
 volumes:
   postgres_data:
 
+# A user-defined bridge lets the backend resolve PostgreSQL by its service name.
 networks:
   rsc-network:
     driver: bridge

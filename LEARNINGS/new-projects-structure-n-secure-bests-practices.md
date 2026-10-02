@@ -4,6 +4,8 @@ Project: rsc-web-picture-market (mikelemus27/rsc-web-picture-market) — AI-gene
 
 This document describes the practices actually applied in this session and explains why they apply to every new microservice/project.
 
+This is a historical record, not a live security or deployment status report. Check the current Compose files, environment configuration, branch state, and test outputs before relying on any present-tense claim below.
+
 ---
 
 ## 1. Repository structure and branch discipline
@@ -32,21 +34,21 @@ This document describes the practices actually applied in this session and expla
 ## 2. Secret hygiene — never commit credentials
 
 ### What was done
-- Found `POSTGRES_PASSWORD: admin123` / `DB_PASSWORD: admin123` in `docker-compose.yml`.
+- Found plaintext database credentials in `docker-compose.yml`.
 - Created `.env` (local, `.gitignore` excluded) with real values.
 - Created `env.template` (committed) as non-secret reference (`CHANGE_ME` → empty `-default` in compose).
 - Applied `env_file: ../.env` in compose + variable substitution (`${DB_PASSWORD}`).
-- Ran `git-filter-repo --replace-text 'admin123==>REMOVED'` on all branches.
+- Ran `git-filter-repo --replace-text '<exposed-credential>==>REMOVED'` on all branches.
 - Force-pushed `main`, `fix/env-secrets`, `fix/service-architecture`.
 
 ### Why
 - Public repo (`mikelemus27/rsc-web-picture-market`) exposes anything in `HEAD`.
-- `git log -S` proves past commits contain secrets (
+- `git log -S` showed past commits contained credentials (
 `0c41d4f`, `b2767c9`, `d6e47b7`, `2595440`, `a408ea6`).
 - Even after removal, history must be rewritten (`filter-repo` or `BFG`).
 
 ### What could improve
-- Rotate actual DB password (old `admin123` still works if clone exists).
+- Rotate credentials that were ever committed. Rewriting Git history does not invalidate a credential or remove copies from existing clones.
 - Add `git-secrets` / `trufflehog` scan in CI to block future leaks.
 - Use Docker Secrets (`docker secret`) for production instead of `.env` on host.
 - Add `.env` creation to onboarding (documented in `env.template`).
@@ -55,12 +57,13 @@ This document describes the practices actually applied in this session and expla
 
 ## 3. Docker Compose — secure, portable, 1:1 mapping
 
-### What was done
-- `docker-compose.yml`: `postgres:16-alpine`; ports `5433:5432` (host:container 1:1); `4001:4001` backend.
-- `DB_PORT: 5432` inside container (not `5433` — internal port). Previously mis-mapped.
-- `env_file: ../.env` loaded at container start.
-- Variables use `${VAR:-default}` (fails closed; no hardcoded defaults for secrets).
-- `DB_NAME: wpm_db`; `POSTGRES_DB: wpm_db`; table `usuario` created with seed.
+### Historical state recorded
+- The Compose setup used PostgreSQL on container port `5432` and the backend on `4001`; host-side port mappings changed over time.
+- The backend connects to the Compose service hostname on its internal PostgreSQL port, regardless of the host-side port mapping.
+- The database name was `wpm_db`.
+- The table `usuario` was not automatically present in a newly initialized database during the later test-failure incident. The current schema initialization notes and evidence are in [`postgresql-learnings.md`](./postgresql-learnings.md).
+
+Do not treat this section as confirmation that current Compose files use environment substitution or contain no plaintext credentials. Audit the checked-out configuration before making a security claim.
 
 ### Why
 - 1:1 mapping (`4001`, `5433`) avoids confusion between host and container ports.
@@ -90,8 +93,8 @@ This document describes the practices actually applied in this session and expla
 
 ### What could improve
 - `.github/workflows/ci.yml` running `bun run src/index.ts` (frontend) + `TEST_URL=... bun test_debug.ts` (backend) on PR.
-- Block merge if secrets detected (`git grep -i 'admin123\|password' -- docker-compose.yml`).
-- Add `git-filter-repo` scan to CI after any `filter-repo` event (verify `admin123` = 0 hits).
+- Add a secret-scanning CI gate; searching for a generic key name such as `password` is too broad to reliably identify leaked values.
+- After a history rewrite, verify that the exposed value no longer appears in refs or remote history; do not treat that as credential rotation.
 - Require PR review (currently PR #3 exists but reviewer assignment blocked by author-is-author).
 
 ---
@@ -145,15 +148,15 @@ Applied:
 - [x] `env.template` as reference
 - [x] `docker-compose.yml` uses variables (`${...}`) without hardcoded secrets
 - [x] `.env` created locally (not committed)
-- [x] `git-filter-repo` run; `admin123`: 0 hits in remote
+- [x] History rewrite was performed; verify current remote history before relying on this historical result.
 - [x] `env_file: ../.env` points to correct path
 - [x] Issue #2 (`security`) created and assigned to human reviewer (`mikelemus27`)
 - [x] PR #3 created (`fix/env-secrets`) with review assignment attempt
 
 Pending / recommended:
-- [ ] Rotate actual `POSTGRES_PASSWORD` (old value `admin123` was in history; must assume exposed)
+- [ ] Confirm that credentials ever committed have been rotated; assume exposed until confirmed.
 - [ ] Verify remote branches (`main`, `fix/env-secrets`, `fix/service-architecture`) all at `32cd3f7` (force-pushed; confirm on GitHub)
-- [ ] Add CI gate that fails on `admin123` or `password` in `docker-compose.yml`
+- [ ] Add secret-scanning CI gate for committed configuration and history.
 - [ ] Add `trufflehog` or `git-secrets` scan to `.github/workflows/`
 - [ ] Confirm `.env` never accidentally committed (current state safe; future commits must be checked)
 - [ ] Add `env_file` validation (fail if `.env` missing at container start)
@@ -184,7 +187,7 @@ Pending / recommended:
 
 ## Achieved (this session)
 
-- `main` at `32cd3f7`: clean history, no `admin123`, secure compose.
+- At the time of this record, `main` was reported at `32cd3f7` after a history rewrite. This does not establish the current history state or credential safety.
 - `fix/env-secrets` merged into `main`; PR #3 created (reviewer assigned manually due to GitHub limitation).
 - All tests pass (backend `8/9`, frontend `4/5`); DB `wpm_db` active; containers restart clean.
 - `.env` local active; `env.template` committed as reference.

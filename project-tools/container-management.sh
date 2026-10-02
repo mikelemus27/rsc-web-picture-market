@@ -17,7 +17,8 @@ usage() {
   echo ""
   echo "Actions:"
   echo "  start-all       Start backend + frontend (frontend uses rsc-shared network)"
-  echo "  stop-all        Stop all running containers"
+  echo "  stop-all        Stop this project's containers"
+  echo "  stop-running-containers  Stop all running containers in the active Docker context (with confirmation)"
   echo "  remove-all      Stop and remove all containers"
   echo "  rebuild-all     Rebuild images and restart (backend first, then frontend)"
   echo "  restart-frontend Restart frontend only (uses running backend at 4001)"
@@ -70,6 +71,50 @@ case "$1" in
     echo -e "${GREEN}=== Stopping all ===${NC}"
     docker compose -f "$BACKEND_COMPOSE" stop 2>/dev/null || true
     docker stop 02_rsc_wp_bun_vue_frontend 2>/dev/null || true
+    ;;
+
+  stop-running-containers)
+    running_containers=$(docker ps --format '{{.ID}}\t{{.Names}}\t{{.Status}}') || {
+      echo "Error: Could not list running Docker containers." >&2
+      exit 1
+    }
+    if [ -z "$running_containers" ]; then
+      echo "No running Docker containers."
+      exit 0
+    fi
+
+    container_ids=$(printf '%s\n' "$running_containers" | cut -f1) || {
+      echo "Error: Could not prepare the running container list." >&2
+      exit 1
+    }
+    if [ -z "$container_ids" ]; then
+      echo "Error: Docker returned running containers without IDs." >&2
+      exit 1
+    fi
+    echo "The following running containers will be stopped:"
+    printf 'ID\tNAME\tSTATUS\n'
+    printf '%s\n' "$running_containers"
+    echo "This includes containers outside this project. In-memory work may be lost."
+    if [ ! -t 0 ]; then
+      echo "Refusing to stop containers without an interactive confirmation." >&2
+      exit 1
+    fi
+    printf "Type 'stop' to continue: "
+    IFS= read -r confirmation || {
+      echo "Confirmation was not received; no containers were stopped." >&2
+      exit 1
+    }
+    if [ "$confirmation" != "stop" ]; then
+      echo "Confirmation did not match; no containers were stopped."
+      exit 1
+    fi
+
+    # Docker returns one ID per line; pass each ID as a separate argument.
+    set -- $container_ids
+    docker stop "$@" || {
+      echo "Error: Docker could not stop every container in the captured list." >&2
+      exit 1
+    }
     ;;
 
   remove-all)
