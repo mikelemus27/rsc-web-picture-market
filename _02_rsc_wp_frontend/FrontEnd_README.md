@@ -40,7 +40,7 @@ This project serves as an automated test harness and terminal-based frontend cli
 ---
 ## 📝 Note on Container Lifecycle (Test vs Live App)
 
-**Current state (CLI test client)**: The container runs `bun test` (via `Dockerfile` `CMD`) and exits cleanly after the suite (`4 pass / 0 fail`). It does **not** stay running (`restart: "no"` in `docker-compose.yml`) because this frontend is only a test harness fetching the backend API (`http://01_rsc_wpm_bun_psgres-backend:4001`).
+**Current state (CLI test client)**: The frontend container runs a dedicated Bun API integration suite against the backend hostname configured by `API_URL`. It does **not** stay running (`restart: "no"` in `docker-compose.yml`) because this frontend is only a test harness fetching the backend API (`http://01_rsc_wpm_bun_psgres-backend:4001`).
 
 **When evolving to an actual Vue/React app**: The container must become a **live server** (e.g., `bun run src/index.ts`, `CMD ["bun", "serve", "src/index.html"]`, or `npm run dev` with a persistent web server). At that point:
 - Change `Dockerfile` `CMD` to start the server (not `bun test`).
@@ -54,13 +54,7 @@ This project serves as an automated test harness and terminal-based frontend cli
   - `TablePrinter`: Displays test results in a clear matrix using `console.table`.
   - `SummaryReporter`: Computes and prints pass/fail totals with visual alerts.
   - `ConsolePrinter`: Provides standardized UTF-8 emojis (`✅`, `❌`, `📌`, `📊`) and formatted console section headers.
-- **Complete CRUD Test Coverage**:
-  - `GET /usuarios`: Verifies listing all users (Status 200).
-  - `GET /usuarios/:id`: Verifies querying a single user by primary identifier (Status 200).
-  - `POST /usuarios`: Verifies user registration with dynamic timestamped payloads (Status 201).
-  - `PUT /usuarios/:id`: Verifies user record updates and response validation (Status 200).
-  - `DELETE /usuarios/:id`: Verifies deletion and status handling (Status 200 / 404).
-  - `GET /ruta-inexistente`: Verifies server 404 fallback behavior on unmapped routes.
+- **API Integration Coverage**: The container runs its own end-to-end API checks over the Compose network: `GET /health` verifies API/database readiness; list and create endpoints check response contracts; GET-by-ID checks a created user; PUT checks both its response and persisted values; DELETE verifies a follow-up GET returns 404. Each CRUD test creates uniquely named data and removes it afterward.
 - **Standalone Interactive Scripts**: Standalone CLI entrypoints for inspecting specific API operations without running the full test harness.
 - **Zero Heavy Dependencies**: Runs directly on native Bun runtime without bulky third-party libraries (no axios, no jest, no express).
 
@@ -313,14 +307,16 @@ const tests = [
   // ...
 ];
 ```
-30092026
-fix(compose): dev/prod split + frontend loop + clean backend compose
+Historical snapshot (2026-09-30; the test count and command below are superseded by the current API integration suite documented later in this README):
 
+```text
+fix(compose): dev/prod split + frontend loop + clean backend compose
 - .dockerignore (tests/), docker-compose.prod.yml (lean)
 - Dockerfile CMD bun test (restart loop fixed)
 - .env API_URL=01_rsc_wpm_bun_psgres-backend:4001 / docker-compose.yml depends_on
 - _01_rsc_wpm_backend/docker-compose: remove frontend service (only postgres+backend)
-- Verified: docker compose run --rm frontend bun test → 4 pass
+- At that time, `docker compose run --rm frontend bun test` reported 4 pass.
+```
 ---
 
 ## 📄 License
@@ -342,56 +338,56 @@ local://docker-compose-dev-vs-prod-plan.md              → approved plan (same 
 local://paste-1.md                                      → tutorial (ConnectionRefused, .env, network)
 ```
 
-**Environment (`_02_rsc_wp_frontend/.env`):** `API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` (container-internal; host tests use `localhost:4001` via override).
+**Environment (`_02_rsc_wp_frontend/.env`):** `API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` (container-internal; local backend tests use `http://localhost:4001` when `API_URL` is unset).
 
 **Key fixes applied:**
 - `.dockerignore`: excludes `tests/` from prod image.
 - `Dockerfile`: `CMD ["bun", "test", "./tests/usuarios.frontend.api.test.ts"]` (loop fixed — no `Restarting`).
 - `docker-compose.prod.yml`: lean (no bind mount).
 - `_01_rsc_wpm_backend/docker-compose.yml`: cleaned — only `postgres` + `backend` (removed `frontend` service that duplicated).
-- Network: `rsc-shared` shared bridge (`docker network create rsc-shared`); both on same network → `ConnectionRefused` resolved.
+- Current network: `_02_rsc_wp_frontend/docker-compose.yml` joins the external `01_rsc_wpm_backend_rsc-network` created by the backend Compose project; the frontend `.env` hostname resolves over that shared network.
 
-**Prverified commands (use these first, not guesses):**
+**Verified API test commands:**
 ```bash
-# 1. Start backend (must be running for frontend)
+# Start the API and its database (preserves the existing PostgreSQL volume).
 cd _01_rsc_wpm_backend && docker compose up -d backend
 
-# 2. Run frontend tests (verified 4 pass / 0 fail / ~82ms)
-docker compose -f ../_02_rsc_wp_frontend/docker-compose.yml run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts
+# Run the backend API suite from inside the backend container.
+cd .. && ./project-tools/container-management.sh test-backend --container
 
-# 3. Interactive / live (after `docker start 02_rsc_wp_bun_vue_frontend` if exited)
-docker exec -it 02_rsc_wp_bun_vue_frontend bun test ./tests/usuarios.frontend.api.test.ts
+# Run the frontend API suite from inside the frontend test container.
+./project-tools/container-management.sh test-frontend
 
-# 4. Direct host test (backend test, container excludes source)
-cd _01_rsc_wpm_backend && bun test ./test/usuarios.api.test.ts   # 4 pass / 2 fail (GET 500 + POST format)
+# Run backend unit and API tests locally (uses localhost:4001 when API_URL is unset).
+cd _01_rsc_wpm_backend && bun run test:all
 ```
 
 **Verification checklist:**
-- [ ] `docker ps` shows `01_rsc_wpm_bun_psgres-backend` (`Up`) and `02_rsc_wp_bun_vue_frontend` (`Up` — not `Restarting`).
-- [ ] `docker logs 02_rsc_wp_bun_vue_frontend` shows `bun test` result, not crash loop.
-- [ ] `.env` points to `01_rsc_wpm_bun_psgres-backend:4001` (not `localhost`).
-- [ ] `docker compose run --rm frontend bun test` passes (4 pass) before calling done.
+- [ ] `docker compose ps` shows the backend and PostgreSQL healthy/running.
+- [ ] Backend-container tests target `http://localhost:4001` from within that container.
+- [ ] Frontend-container tests target the backend hostname in `.env`; an unreachable configured URL fails rather than falling back to localhost.
+- [ ] Both API suites pass health, create, GET-by-ID, PUT/persistence, and DELETE/post-delete checks.
 - [ ] Postgres `wpm_db` online (`pg_isready -U admin -d wpm_db`); table `usuario` exists.
 - [ ] `.dockerignore` excludes `tests/`; `docker build .` produces lean image (no `tests/` in `docker images` layer).
 
 **Reference links:**
 - Plan / durable copy: `local://docker-compose-dev-vs-prod-plan.md`
 - Tutorial (original, now updated by `LEARNINGS/...`): `local://paste-1.md`
-- Session notes (rebuilt, complete): `LEARNINGS/docker-microservices-containers-learnings.md`
+- Current container/API test findings and counts: `LEARNINGS/docker-microservices-containers-learnings.md`, section 6.
 
 **Notes:**
-- `docker compose run --rm frontend bun test` uses the compose `rsc-network`; `docker exec` on a standalone container needs that same network (`rsc-shared` or `external: true` with `name: 01_rsc_wpm_backend_rsc-network`).
-- Backend test (`bun test`) runs at host because multi-stage `Dockerfile` (`production` stage) only includes `dist/`; `tests/` excluded by `.dockerignore`.
+- `./project-tools/container-management.sh test-frontend` creates a temporary frontend test container on the Compose network and uses its configured `API_URL`.
+- The backend production image excludes the test source; `test-backend --container` copies the backend API test file into the running container temporarily, executes it there, then removes it.
 - If `GET /usuarios` returns `500` in backend test: server crash at endpoint (code/DB state issue, separate from docker/network — verify DB connection `DB_HOST=postgres`, table `usuario` exists).
 ---
 A POSIX-compliant bash script (`project-tools/container-management.sh`) for managing the full container lifecycle. It wraps `docker compose` and `docker` commands to avoid common mistakes that caused errors during this project:
 
-- **`start-all`**: Builds the backend image (`_01_rsc_wpm_backend/docker-compose.yml`), starts `01_rsc_wpm_bun_psgres-backend`, then builds/restarts the frontend (`_02_rsc_wp_frontend/docker-compose.yml` with `.env` pointing to `01_rsc_wpm_bun_psgres-backend:4001`, `rsc-shared` network, bind mount `.:/app`). Uses `--no-deps` for frontend so it connects to the running backend directly (not a duplicate `bun_app`).
+- **`start-all`**: Builds and starts the backend, then starts the frontend service on the external backend Compose network with `.env` pointing to `01_rsc_wpm_bun_psgres-backend:4001`. Uses `--no-deps` for frontend so it connects to the running backend directly, not a duplicate backend.
 - **`stop-all`**: Stops both `backend` and `frontend` services (`docker compose stop`) and also any standalone `02_rsc_wp_bun_vue_frontend` container (`docker stop`).
 - **`remove-all`**: Stops and removes (`docker rm -f`) all running containers — clean slate before a new build/restart.
 - **`rebuild-all`**: Full cycle — builds backend (`build backend`), builds/rebuilds frontend (`build --no-cache frontend`); restarts backend first, then frontend (handles service rename `bun_app` → `backend` in compose). Confirms both `Up` via `docker ps`.
-- **`test-frontend`**: Runs `docker compose -f _02_rsc_wp_frontend/docker-compose.yml run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts`. Verified: `4 pass, 0 fail` (~82–166ms). Uses compose's `rsc-network` (`external: true`, `name: 01_rsc_wpm_backend_rsc-network`) so `.env` hostname resolves correctly (no `ConnectionRefused` / `FailedToOpenSocket`).
-- **`test-backend`**: Changes to `_01_rsc_wpm_backend/` and runs `bun test ./test/usuarios.api.test.ts`. Verified: `4 pass, 2 fail` at host (multi-stage production `Dockerfile` excludes `tests/`; container-based backend tests not possible without bind-mount or source image).
+- **`test-frontend`**: Runs `docker compose -f _02_rsc_wp_frontend/docker-compose.yml run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts`. It uses the `API_URL` hostname on the shared Compose network; an unreachable configured host fails instead of silently switching to localhost.
+- **`test-backend --container`**: Runs backend unit tests locally, then copies and executes the API integration suite inside the running backend container.
 - **`help`**: Shows all actions and brief descriptions.
 
-Requires: `docker compose`, `docker ps`, `.env` (`API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` — never `localhost` inside container), `.dockerignore` (`tests/` excluded from image; `.env` must reference backend by hostname, not `localhost`), `Dockerfile` (`CMD` currently `bun test` with `restart: "no"` to prevent loop; future Vue server needs persistent `CMD` and `restart: unless-stopped`), shared `rsc-shared` network (`docker network create rsc-shared` or `external: true` with `name: 01_rsc_wpm_backend_rsc-network`). Without shared network, the container hostname `01_rsc_wpm_bun_psgres-backend` fails (`ConnectionRefused` / `FailedToOpenSocket`).
+Requires: `docker compose`, `docker ps`, `.env` (`API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` — never `localhost` inside the frontend container), `.dockerignore` (`tests/` excluded from image), and the external network configured in `_02_rsc_wp_frontend/docker-compose.yml` to match the backend Compose network. The test service uses `restart: "no"` because it exits after running tests; a future persistent Vue server would need a server `CMD` and an appropriate restart policy. Without the shared network, the backend hostname cannot resolve or connect.

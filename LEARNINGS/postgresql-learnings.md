@@ -56,11 +56,11 @@ The backend connects to PostgreSQL over the Compose network using the service ho
 
 When inspecting a project, read the actual `ports:` mapping rather than assuming a host port. If another local database already uses the desired host port, choose a free host-side port while keeping the backend's in-network connection at `postgres:5432`.
 
-## 5. Make API test assertions prove the contract
+## 5. Historical create-user test gap (fixed)
 
-The backend and frontend user-creation tests currently allow statuses `[201, 409, 500]`. Such an assertion can accept an unexpected server error as a passing test. A test that verifies successful creation should require `201` and inspect the response body; duplicate-email behavior should be tested separately with the documented conflict status.
+An earlier version of the backend and frontend create-user suites accepted `[201, 409, 500]`. Such an assertion could accept an unexpected server error as a passing test. That was a historical defect and is no longer the current test contract: unique creation now requires `201`, and duplicate email is tested separately by first establishing a successful `201` creation, then requiring `409`.
 
-The regression run after creating `usuario` reported `4 pass, 0 fail` in each suite. Treat that as evidence for those specific cases and environment, not as proof that every database error path is covered.
+The `4 pass, 0 fail` results below are historical snapshots from after the schema repair, not current suite counts and not evidence of full CRUD coverage.
 
 ## 6. Keep credentials and status claims safe
 
@@ -68,7 +68,7 @@ Do not put database passwords or other credentials in learning documents. Use pl
 
 Mark environment-specific outcomes as historical snapshots. Check the current Compose files, database state, and test output before reusing old commands or claiming a service is healthy.
 
-## 7. Verified incident record
+## 7. Verified missing-schema incident record
 
 For this incident:
 
@@ -79,6 +79,19 @@ For this incident:
 5. Re-ran both suites: backend `4 pass, 0 fail`; frontend `4 pass, 0 fail`.
 
 The Compose init mount was validated as configuration, but the automatic initialization path was not tested by deleting and recreating a volume. Keep this distinction when reporting the level of verification.
+
+## 8. Current API readiness and container test results (2026-10-02)
+
+The backend now exposes `GET /health`, which runs `SELECT 1` through the PostgreSQL pool. It returns `200 {"status":"ok"}` when the query succeeds and logs the database error before returning `503 {"status":"unavailable"}` if it fails. This endpoint checks database connectivity; it does not prove that the `usuario` schema exists. The healthy response was verified by `curl`; the unavailable branch was not fault-injected to avoid disturbing the persistent database.
+
+The backend and frontend API integration suites both include health, valid GET-by-ID, PUT plus persisted-value readback, and DELETE plus post-delete 404 checks. Each test uses unique user data and cleans up created rows. Container API test runs use their actual network targets: backend container `http://localhost:4001`; frontend container the configured `API_URL` hostname. A configured but unreachable `API_URL` no longer falls back to localhost.
+
+Observed results:
+
+- Backend local: 16 passed, 0 failed (36 assertions, including handler unit tests).
+- Backend-container API suite: 11 passed, 0 failed (28 assertions), plus 5 local handler unit tests passed.
+- Frontend-container API suite: 11 passed, 0 failed (28 assertions).
+- Backend image rebuilt without deleting or recreating the PostgreSQL container or named volume.
 
 ## Related learning
 

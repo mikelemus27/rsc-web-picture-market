@@ -54,7 +54,7 @@ The primary objective of this project is to implement a robust, maintainable, an
   - Database persistence adapter using connection pooling (`pg.Pool`).
   - Separation of Data Transfer Objects (`UsuarioDTO`, `CreateUsuarioRequest`, `ActualizarUsuarioRequest`) to prevent domain leakage.
 - **Native Bun HTTP Server**: Direct usage of `Bun.serve` for high throughput, low memory footprint, and native Web standard `Request`/`Response` APIs.
-- **Automated Integration & Health Test Script**: Standalone executable suite (`test_debug.ts`) for continuous verification of all routes and edge cases.
+- **API Integration Suite**: Bun tests verify API readiness and user endpoints against a running server from the backend and frontend containers.
 - **Production-Ready Dockerization**: Multi-stage Dockerfile (`deps` -> `builder` -> `production`) creating a lightweight production image running under an unprivileged user (`bunuser`).
 
 ---
@@ -69,7 +69,7 @@ The primary objective of this project is to implement a robust, maintainable, an
 | **Database Client** | [`pg`](https://node-postgres.com/) (`^8.20.0`) | PostgreSQL client with connection pooling (`Pool`). |
 | **Containerization** | [Docker](https://www.docker.com/) | Container packaging with multi-stage builds and unprivileged user execution. |
 | **Orchestration** | [Docker Compose](https://docs.docker.com/compose/) | Multi-container coordination for app and database services with persistent volumes. |
-| **Testing Client** | Native `fetch` + `test_debug.ts` | Automated end-to-end integration and error scenario testing. |
+| **Testing Client** | Bun tests + native `fetch` | End-to-end API contract checks from each container network location. |
 
 ---
 
@@ -134,7 +134,7 @@ flowchart TD
 ├── bun.lock                        # Bun dependency lockfile
 ├── tsconfig.json                   # TypeScript compiler configuration (ESNext, Bundler)
 ├── commands.md                     # Reference operational notes, DB queries, and cURL snippets
-├── test_debug.ts                   # Automated integration test suite for all endpoints
+├── test_debug.ts                   # Legacy standalone integration test script
 ├── README.md                       # Comprehensive project documentation
 │
 └── src/
@@ -323,7 +323,7 @@ ON CONFLICT (email) DO NOTHING;
 | Method | Endpoint | Description | Status Code |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/usuarios` | List all users | `200 OK` |
-| `POST` | `/usuarios` | Create a new user | `201 Created` / `400 Bad Request` |
+| `POST` | `/usuarios` | Create a new user | `201 Created` / `400 Bad Request` / `409 Conflict` / `500 Internal Server Error` |
 | `GET` | `/usuarios/:id` | Get user by ID | `200 OK` / `404 Not Found` |
 | `PUT` | `/usuarios/:id` | Update an existing user | `200 OK` / `400 Bad Request` / `404 Not Found` |
 | `DELETE` | `/usuarios/:id` | Delete user by ID | `200 OK` / `404 Not Found` |
@@ -378,6 +378,10 @@ curl -X POST http://localhost:3000/usuarios \
   "error": "nombre y email son obligatorios"
 }
 ```
+
+Submitting an email that already exists returns `409 Conflict`. Unexpected server failures return `500 Internal Server Error`; clients should not mistake this for invalid user input.
+
+The automated API tests assert these create-user outcomes separately: a new email must return `201`, a repeated email must return `409` only after the first request returned `201`, and malformed input must return `400`. Any other status, including `500`, fails the matching test.
 
 ---
 
@@ -443,27 +447,50 @@ curl -X DELETE http://localhost:3000/usuarios/6
 
 ## 🧪 Testing & Debugging
 
-The repository includes a comprehensive, standalone automated test script: `test_debug.ts`. It executes sequential integration tests covering valid cases and boundary/error conditions against a running server.
+The Bun API integration suite covers health/readiness and user CRUD behavior against a running server. The legacy standalone script `test_debug.ts` remains available for manual regression checks.
 
 ### Running the Test Suite
 
-1. Ensure the microservice is running on port `3000`.
-2. Run the script using Bun:
-   ```bash
-   bun test_debug.ts
-   ```
+The API server and PostgreSQL must be running on port `4001`. For a local API server, run:
+
+```bash
+bun run test:all
+```
+
+To run the handler unit tests locally and then execute the API integration suite inside the running backend container:
+
+```bash
+bun run test:all -- --container
+```
+
+From the repository root, these commands run the API suite from each container's network location:
+
+```bash
+./project-tools/container-management.sh test-backend --container
+./project-tools/container-management.sh test-frontend
+```
+
+The backend container targets `http://localhost:4001`; the frontend test container targets the backend using the hostname configured by `API_URL`. A configured target is never replaced with localhost if unreachable, so a network/configuration failure fails the suite rather than testing a different route. When `API_URL` is unset for a local run, the suite defaults to `http://localhost:4001`.
+
+The legacy sequential test script remains available separately:
+
+```bash
+bun test_debug.ts
+```
 
 ### Test Coverage
 
-The test suite automatically tests:
-- `GET /usuarios`: Listing users (`200 OK`).
-- `POST /usuarios`: Generating dynamic user payloads (`201 Created`).
-- `GET /usuarios/:id`: Querying the newly created user (`200 OK`).
-- `PUT /usuarios/:id`: Modifying existing user attributes (`200 OK`).
-- `DELETE /usuarios/:id`: Removing the created user (`200 OK`).
+The backend and frontend API suites independently test:
+- `GET /health`: API and PostgreSQL readiness (`200 OK`; `503 Service Unavailable` if the database check fails).
+- `GET /usuarios`: Listing users (`200 OK` with an array).
+- `POST /usuarios`: Unique creation (`201 Created`), duplicate email (`409 Conflict`), missing fields and invalid field types (`400 Bad Request`).
+- `GET /usuarios/:id`: Reading the test-created user (`200 OK`).
+- `PUT /usuarios/:id`: Updating fields and verifying they persist on a subsequent read (`200 OK`).
+- `DELETE /usuarios/:id`: Deleting the test-created user and verifying a subsequent read returns `404 Not Found`.
 - `GET /ruta-inexistente`: Handling non-existent routes (`404 Not Found`).
-- `GET /usuarios/abc`: Validating malformed numeric IDs (`400 Bad Request`).
-- `POST /usuarios`: Missing/empty payload parameters (`400 Bad Request`).
+- `GET /usuarios/abc`: Rejecting malformed numeric IDs (`400 Bad Request`).
+
+CRUD tests use unique emails and delete their created users; they do not require deleting or recreating the database volume.
 
 Sample Output:
 ```text

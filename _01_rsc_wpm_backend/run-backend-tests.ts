@@ -1,4 +1,5 @@
 const testFile = "test/usuarios.backend.api.test.ts";
+const testDirectory = "./test";
 const args = Bun.argv.slice(2);
 
 if (args.length > 1 || (args.length === 1 && args[0] !== "--container" && args[0] !== "--help")) {
@@ -8,10 +9,10 @@ if (args.length > 1 || (args.length === 1 && args[0] !== "--container" && args[0
 
 if (args[0] === "--help") {
   console.log([
-    "Run backend API tests locally:",
+    "Run backend handler unit tests and API tests locally:",
     "  bun run test:all",
     "",
-    "Run backend API tests inside the running Compose backend container:",
+    "Run handler unit tests locally and API tests inside the running Compose backend container:",
     "  bun run test:all -- --container",
   ].join("\n"));
   process.exit(0);
@@ -20,8 +21,8 @@ if (args[0] === "--help") {
 const inContainer = args[0] === "--container";
 
 console.log(inContainer
-  ? "Running backend tests inside the Compose backend container against http://localhost:4001..."
-  : `Running backend tests locally against ${process.env.TEST_URL ?? "http://localhost:4001"}...`);
+  ? "Running handler unit tests locally, then API tests inside the Compose backend container..."
+  : `Running backend handler unit tests and API tests locally against ${process.env.TEST_URL ?? "http://localhost:4001"}...`);
 
 async function run(command: string[]): Promise<number> {
   const process = Bun.spawn(command, {
@@ -33,8 +34,13 @@ async function run(command: string[]): Promise<number> {
 }
 
 if (!inContainer) {
-  process.exitCode = await run(["bun", "test", testFile]);
+  process.exitCode = await run(["bun", "test", testDirectory]);
 } else {
+  process.exitCode = await run(["bun", "test", "test/create-usuario-handler.test.ts"]);
+  if (process.exitCode !== 0) {
+    process.exit(process.exitCode);
+  }
+
   const containerTestFile = `/tmp/backend-api-test-${process.pid}.ts`;
   const copied = await run(["docker", "compose", "cp", testFile, `backend:${containerTestFile}`]);
 

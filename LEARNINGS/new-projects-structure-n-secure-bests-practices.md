@@ -83,13 +83,13 @@ Do not treat this section as confirmation that current Compose files use environ
 
 ---
 
-## 4. CI / CD pipeline (missing — must add)
+## 4. CI / CD pipeline (historically missing; re-check before acting)
 
-### What is achievable / missing
-- No `github/workflows/` present in project.
-- `test:suite` exists (`bun run src/index.ts`) but is not automated.
-- `tsc --noEmit` passes (frontend `0` errors).
-- `test_debug.ts` (backend) and `test:suite` (frontend) exist but are not run in CI.
+### What is achievable / missing (historical snapshot)
+- No `github/workflows/` was present when this note was written. The repository scan on 2026-10-02 found no workflow files; inspect `.github/workflows/` again before adding CI.
+- The original notes recorded a `test:suite` command (`bun run src/index.ts`) that was not automated.
+- The original notes recorded `tsc --noEmit` passing (frontend `0` errors).
+- The original notes recorded `test_debug.ts` (backend) and `test:suite` (frontend) as not run in CI. These commands/results are historical; use current READMEs for supported test commands.
 
 ### What could improve
 - `.github/workflows/ci.yml` running `bun run src/index.ts` (frontend) + `TEST_URL=... bun test_debug.ts` (backend) on PR.
@@ -99,7 +99,7 @@ Do not treat this section as confirmation that current Compose files use environ
 
 ---
 
-## 5. Testing patterns used
+## 5. Testing patterns used in the original session (historical)
 
 ### Backend (`_01_rsc_wpm_backend/test_debug.ts`)
 - Uses `fetch` against `BASE_URL` (`localhost:4001` via `TEST_URL`).
@@ -135,18 +135,20 @@ Do not treat this section as confirmation that current Compose files use environ
 - Cognitive load reduced: any new session can read `AGENTS.md` + `.gitignore` + this doc to know branch convention, secret policy, compose setup, and test commands.
 
 ### What could improve
-- Add `README.md` at repo root with: branch naming, `docker-compose` start command, `.env` setup, `bun test` instructions.
+- [x] Add a root `README.md` with project startup, test commands, and links to deeper project documentation. Current instructions are in [`README.md`](../README.md).
 - Add `docs/ARCHITECTURE.md` describing hexagonal injection (`index.ts` → 5 use cases → `UsuarioService`).
 - Add `docs/SECURITY.md` with rotation procedure for `POSTGRES_PASSWORD`.
 
 ---
 
-## 7. Security audit checklist (applied + pending)
+## 7. Historical security checklist (not current-state evidence)
+
+The checkmarks below record claims from the original security work. They do not establish current configuration or remote history. In particular, the current backend Compose file still contains inline development database credentials; the root README warns contributors to replace them before sharing or deploying. Do not copy secret values into this learning note.
 
 Applied:
 - [x] `.env` excluded (`.gitignore`)
 - [x] `env.template` as reference
-- [x] `docker-compose.yml` uses variables (`${...}`) without hardcoded secrets
+- [x] (Historical claim; not true of the current Compose configuration.) At the time, `docker-compose.yml` was reported to use variables (`${...}`) without hardcoded secrets.
 - [x] `.env` created locally (not committed)
 - [x] History rewrite was performed; verify current remote history before relying on this historical result.
 - [x] `env_file: ../.env` points to correct path
@@ -166,7 +168,7 @@ Pending / recommended:
 ## 8. What this project teaches (transferable)
 
 - **Branch discipline** (`fix/` vs `feat/`) is not optional for review focus.
-- **Secret hygiene** requires three layers: `.env` (local), `env.template` (reference), `docker-compose.yml` (variables), `.gitignore` (exclusion), and `git-filter-repo` (history). One layer missing = leak.
+- **Secret hygiene** needs separate safeguards: ignored local configuration or managed secrets, non-secret setup documentation, secret exclusion, rotation after exposure, and careful history handling. Verify the current configuration; a history rewrite does not rotate credentials.
 - **Port mapping** (`4001:4001`, `5433:5432`) must distinguish host vs container; `DB_PORT` inside container must match the container's listen port (`5432`), not the host mapping.
 - **Tests** should distinguish between expected failures (`GET /` 404 if no root route) and real regressions.
 - **GH CLI** (`gh issue`, `gh pr`, `gh pr edit`) creates traceable review artifacts; reviewer assignment can fail if author = reviewer (GitHub limitation).
@@ -185,9 +187,17 @@ Pending / recommended:
 - `.github/issue_env_secrets.md` — security audit record
 - `AGENTS.md` — project instructions
 
-## Achieved (this session)
+## Achieved in the original `fix/env-secrets` session (historical)
 
 - At the time of this record, `main` was reported at `32cd3f7` after a history rewrite. This does not establish the current history state or credential safety.
 - `fix/env-secrets` merged into `main`; PR #3 created (reviewer assigned manually due to GitHub limitation).
 - All tests pass (backend `8/9`, frontend `4/5`); DB `wpm_db` active; containers restart clean.
 - `.env` local active; `env.template` committed as reference.
+
+## Learnings reviewed on 2026-10-02
+
+- [x] A root `README.md` now documents project startup, backend-local tests, and separate backend-container and frontend-container API test commands. The older recommendation to create it is complete.
+- The repository now has a tracked root `TODO.md`, linked from `README.md`, for follow-up work that must survive across agent sessions. Session-local TODO entries alone are not persistent project backlog.
+- Current backend and frontend API suites independently test network reachability, `/health`, GET-by-ID, PUT persistence, and DELETE followed by 404. A configured `API_URL` failure does not silently fall back to localhost.
+- The backend Compose file still has inline development credentials. Rewriting Git history does not rotate a credential; replace inline values with ignored local configuration or managed secrets before sharing/deploying, and rotate any credential that was exposed.
+- Today's verification covered backend-local tests (16 passed), backend-container API tests (11 passed plus 5 local handler unit tests), frontend-container API tests (11 passed), and `git diff --check`. The `/health` 503 failure branch remains untested and is listed in [`TODO.md`](../TODO.md).

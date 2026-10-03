@@ -2,7 +2,7 @@
 
 Project: rsc-web-picture-market (mikelemus27/rsc-web-picture-market). Created during `fix/env-secrets` session.
 
-This file records historical commands and outcomes. Check the current repository state before relying on branch, security, issue, or pull request status.
+This file records historical commands and outcomes plus reusable practices. Check the current repository state before relying on branch, security, issue, or pull request status.
 
 ## 1. Branch naming (industry standard)
 
@@ -172,3 +172,11 @@ Applied in this repo:
   to commit.
 - Existing Git ignores RSC state and several agent integration directories; preserve those local
   exclusions unless a specific project-owned source file is intentionally being shared.
+
+## Persist follow-up work across agents and sessions
+
+Session-local TODO tools do not create repository files and should be treated as temporary coordination state. Put accepted follow-up work that must survive a new agent or session in the tracked root [`TODO.md`](../TODO.md). Write each item with its goal and observable completion criteria. Mark it complete only after implementation and verification; record test evidence in the relevant feature/change documentation.
+
+Use the root README to link to the persistent backlog so contributors can find it without chat history. Keep the FTD feature note as evidence for one bounded change; do not use it as the only place to store unrelated future tasks.
+
+Applied in this repo on 2026-10-02: `TODO.md` carries the pending `/health` 503 database-probe test and credential externalization/rotation follow-up, each with observable completion criteria.

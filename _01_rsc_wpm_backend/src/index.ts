@@ -15,12 +15,12 @@ from "./aplicacion/services/UsuarioService";
 
 import { UsuarioController }
 from "./infraestructura/adaptadores/input/http/UsuarioController";
+import { handleCreateUsuario } from "./infraestructura/adaptadores/input/http/CreateUsuarioHandler";
 import { EliminarUsuarioUseCase } from "./aplicacion/caso_uso/usuario/eliminar_usuarios/EliminarUsuarioUseCase";
 import { ActualizarUsuarioUseCase } from "./aplicacion/caso_uso/usuario/actualizar_usuarios/ActualizarUsuarioUseCase";
 import { CrearUsuarioUseCase } from "./aplicacion/caso_uso/usuario/crear_usuario/CrearUsuarioUseCase";
 import { ObtenerUsuarioUseCase } from "./aplicacion/caso_uso/usuario/obtener_usuario/ObtenerUsuarioUseCase";
 import { ListarUsuariosUseCase } from "./aplicacion/caso_uso/usuario/listar_usuarios/ListarUsuariosUseCase";
-import { CreateUsuarioRequest } from "./aplicacion/dto/CreateUsuarioRequest";
 import { ActualizarUsuarioRequest } from "./aplicacion/dto/ActualizarUsuarioRequest";
 
 /*
@@ -127,6 +127,20 @@ const server = Bun.serve({
 
       console.log(`\n${method} ${pathname}`);
 
+      if (pathname === "/health") {
+        if (method !== "GET") {
+          return json({ error: "Method Not Allowed" }, 405);
+        }
+
+        try {
+          await db.query("SELECT 1");
+          return json({ status: "ok" });
+        } catch (error) {
+          console.error("Health check failed:", error);
+          return json({ status: "unavailable" }, 503);
+        }
+      }
+
       /*
       ==========================================
       /usuarios
@@ -157,49 +171,9 @@ const server = Bun.serve({
         */
 
         if (method === "POST") {
-
-          const body = (await req.json()) as any;
-
-          const nombre = body?.nombre?.trim();
-
-          const email = body?.email?.trim();
-
-          /*
-          ======================================
-          VALIDACIONES
-          ======================================
-          */
-
-          if (!nombre || !email) {
-
-            return json(
-              {
-                error: "nombre y email son obligatorios",
-              },
-              400
-            );
-          }
-
-          /*
-          ======================================
-          CREAR USUARIO
-          ======================================
-          */
-          try {
-            const dtoUser = new CreateUsuarioRequest(nombre, email);
-            const usuario =
-              await usuarioController.crearUsuario(dtoUser);
-
-            return json(usuario, 201);
-          } catch (error: any) {
-            const isConflict = error.message?.includes("ya existe");
-            return json(
-              {
-                error: error.message,
-              },
-              isConflict ? 409 : 400
-            );
-          }
+          return handleCreateUsuario(req, dtoUser =>
+            usuarioController.crearUsuario(dtoUser)
+          );
         }
 
         /*
@@ -425,4 +399,3 @@ console.log(`
 🚀 Microservicio ejecutándose
 🌐 http://localhost:${server.port}
 `);
-

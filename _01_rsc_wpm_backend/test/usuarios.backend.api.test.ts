@@ -6,63 +6,158 @@
 */
 import { describe, test, expect } from "bun:test";
 
-// Keep the local address as a predictable fallback for development and test runs.
+// Use localhost only when no API_URL was configured, as in a local test run.
 const LOCAL_BASE_URL = "http://localhost:4001";
 // Remove surrounding whitespace and trailing slashes so endpoint paths can be appended consistently.
-const REMOTE_BASE_URL = process.env.API_URL?.trim().replace(/\/+$/, "");
-
-// Resolve the target once before defining/running tests so every case uses the same API host.
-async function resolveBaseUrl(): Promise<string> {
-  if (!REMOTE_BASE_URL) {
-    console.info("API_URL is not set; using the local API.");
-    return LOCAL_BASE_URL;
-  }
-
-  // Invalid configuration should be corrected rather than hidden by switching to localhost.
-  const remoteUrl = new URL(REMOTE_BASE_URL);
-  if (remoteUrl.protocol !== "http:" && remoteUrl.protocol !== "https:") {
-    throw new Error("API_URL must use http:// or https://");
-  }
-
-  // A short timeout prevents a slow or unreachable remote host from stalling the test suite.
-  const signal = AbortSignal.timeout(3_000);
-  try {
-    // Any HTTP response means the remote server is reachable; its status is left for the actual tests to assert.
-    await fetch(`${REMOTE_BASE_URL}/usuarios`, { signal });
-    console.info(`Remote API responded; using ${REMOTE_BASE_URL}.`);
-    return REMOTE_BASE_URL;
-  } catch (error) {
-    // Only timeout and network connection failures trigger local fallback; other errors remain visible.
-    if (!signal.aborted && !(error instanceof TypeError)) {
-      throw error;
-    }
-
-    console.warn(
-      `Remote API did not respond; falling back to ${LOCAL_BASE_URL}.`,
-      error,
-    );
-    return LOCAL_BASE_URL;
-  }
+const CONFIGURED_BASE_URL = process.env.API_URL?.trim().replace(/\/+$/, "");
+const BASE_URL = CONFIGURED_BASE_URL || LOCAL_BASE_URL;
+const parsedBaseUrl = new URL(BASE_URL);
+if (parsedBaseUrl.protocol !== "http:" && parsedBaseUrl.protocol !== "https:") {
+  throw new Error("API_URL must use http:// or https://");
 }
 
-const BASE_URL = await resolveBaseUrl();
+type Usuario = {
+  id: number;
+  nombre: string;
+  email: string;
+};
+
+async function createTestUser(nombre: string): Promise<Usuario> {
+  const response = await fetch(`${BASE_URL}/usuarios`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nombre,
+      email: `api_test_${crypto.randomUUID()}@test.com`,
+    }),
+  });
+  expect(response.status).toBe(201);
+  return await response.json() as Usuario;
+}
+
+async function cleanupTestUser(id: number): Promise<void> {
+  const response = await fetch(`${BASE_URL}/usuarios/${id}`, { method: "DELETE" });
+  expect([200, 404]).toContain(response.status);
+}
 
 describe("Backend API — usuarios (parallel TDD)", () => {
-  test(`GET ${BASE_URL}/usuarios returns 200 with arrayv`, async () => {
+  test(`GET ${BASE_URL}/health reports API readiness`, async () => {
+    const response = await fetch(`${BASE_URL}/health`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "ok" });
+  });
+
+  test(`GET ${BASE_URL}/usuarios returns 200 with array`, async () => {
     const res = await fetch(`${BASE_URL}/usuarios`);
     expect(res.status).toBe(200);
     const data = await res.json() as any[];
     expect(Array.isArray(data)).toBe(true);
   });
 
-  test(`POST ${BASE_URL}/usuarios creates user (201 or 409/500 handled gracefully)`, async () => {
-    const body = { nombre: "TDD User", email: `tdd_${Date.now()}@test.com` };
+  test(`POST ${BASE_URL}/usuarios creates user with a unique email`, async () => {
+    const body = { nombre: "TDD User", email: `tdd_${crypto.randomUUID()}@test.com` };
     const res = await fetch(`${BASE_URL}/usuarios`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    expect([201, 409, 500]).toContain(res.status);
+    expect(res.status).toBe(201);
+    const created = await res.json() as Usuario;
+    await cleanupTestUser(created.id);
+  });
+
+  test(`POST ${BASE_URL}/usuarios returns 409 when the email already exists`, async () => {
+    const body = { nombre: "TDD Duplicate", email: `duplicate_${crypto.randomUUID()}@test.com` };
+    const createResponse = await fetch(`${BASE_URL}/usuarios`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    expect(createResponse.status).toBe(201);
+    const created = await createResponse.json() as Usuario;
+
+    try {
+      const duplicateResponse = await fetch(`${BASE_URL}/usuarios`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      expect(duplicateResponse.status).toBe(409);
+    } finally {
+      await cleanupTestUser(created.id);
+    }
+  });
+
+  test(`POST ${BASE_URL}/usuarios returns 400 when required data is missing`, async () => {
+    const res = await fetch(`${BASE_URL}/usuarios`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: "TDD User" }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test(`POST ${BASE_URL}/usuarios returns 400 when fields have invalid types`, async () => {
+    const res = await fetch(`${BASE_URL}/usuarios`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: 7, email: "invalid-type@example.com" }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test(`GET ${BASE_URL}/usuarios/:id returns the created user`, async () => {
+    const created = await createTestUser("Backend API GET by ID");
+    try {
+      const response = await fetch(`${BASE_URL}/usuarios/${created.id}`);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(created);
+    } finally {
+      await cleanupTestUser(created.id);
+    }
+  });
+
+  test(`PUT ${BASE_URL}/usuarios/:id updates and persists user fields`, async () => {
+    const created = await createTestUser("Backend API update before");
+    const updated = {
+      id: created.id,
+      nombre: "Backend API update after",
+      email: `api_updated_${crypto.randomUUID()}@test.com`,
+    };
+    try {
+      const response = await fetch(`${BASE_URL}/usuarios/${created.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre: updated.nombre, email: updated.email }),
+      });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(updated);
+
+      const readResponse = await fetch(`${BASE_URL}/usuarios/${created.id}`);
+      expect(readResponse.status).toBe(200);
+      expect(await readResponse.json()).toEqual(updated);
+    } finally {
+      await cleanupTestUser(created.id);
+    }
+  });
+
+  test(`DELETE ${BASE_URL}/usuarios/:id removes the user`, async () => {
+    const created = await createTestUser("Backend API delete");
+    try {
+      const response = await fetch(`${BASE_URL}/usuarios/${created.id}`, {
+        method: "DELETE",
+      });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({
+        message: "Usuario eliminado",
+        usuario: created,
+      });
+
+      const readResponse = await fetch(`${BASE_URL}/usuarios/${created.id}`);
+      expect(readResponse.status).toBe(404);
+    } finally {
+      await cleanupTestUser(created.id);
+    }
   });
 
   test(`GET ${BASE_URL}/ruta-inexistente returns 404`, async () => {

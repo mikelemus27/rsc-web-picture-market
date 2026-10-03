@@ -11,7 +11,9 @@
     "typescript": "^5"
   },
   "scripts": {
-    "test": "bun test test/usuarios.backend.api.test.ts",
+    "test": "bun test ./test",
+    "test:unit": "bun test test/create-usuario-handler.test.ts",
+    "test:api": "bun test test/usuarios.backend.api.test.ts",
     "test:all": "bun run run-backend-tests.ts",
     "test:full": "TEST_URL=http://localhost:4001 bun test test/usuarios.backend.api.test.ts",
     "test:tdd": "TEST_URL=http://localhost:4001 bun test test/usuarios.backend.api.test.ts"

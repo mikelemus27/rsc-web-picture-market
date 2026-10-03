@@ -38,25 +38,25 @@ PostgreSQL processes initialization scripts only when it initializes an empty da
 
 ## Run API tests
 
-Start the backend and database first. From the repository root, run the backend API tests inside the running Compose backend:
+Start the backend and database first. These suites independently exercise the API from different network locations:
 
 ```bash
+# Backend API suite inside the backend container.
 ./project-tools/container-management.sh test-backend --container
-```
 
-The command copies the test file into the backend container, runs Bun's test runner against `http://localhost:4001` from inside that container, and removes the temporary test file afterward.
-
-Run the backend tests on the host instead:
-
-```bash
-./project-tools/container-management.sh test-backend
-```
-
-Run the frontend API contract tests in a temporary Compose container:
-
-```bash
+# Frontend API suite inside a temporary frontend container.
 ./project-tools/container-management.sh test-frontend
 ```
+
+The backend suite targets `http://localhost:4001` from inside the backend container. The frontend suite uses `API_URL` from `_02_rsc_wp_frontend/.env` to reach the backend over the Compose network. A configured URL is not replaced with localhost if unreachable, so the frontend run will fail when its network route is broken.
+
+To run backend unit and API tests locally instead, from the backend directory run:
+
+```bash
+cd _01_rsc_wpm_backend && bun run test:all
+```
+
+The API integration suites cover `GET /health` (including PostgreSQL readiness), list/create and error contracts, valid GET-by-ID, PUT with a follow-up read to confirm persistence, and DELETE with a follow-up 404. Each CRUD scenario creates unique user data and removes it afterward.
 
 The frontend test container needs network access to the running backend. These commands test API contracts; they do not render or launch a browser-based storefront.
 
@@ -70,8 +70,9 @@ Run commands from the repository root:
 | `./project-tools/container-management.sh stop-all` | Stop this project's backend and frontend containers; does not remove them or their data volumes. |
 | `./project-tools/container-management.sh stop-running-containers` | Display and stop every running container in the active Docker context after an interactive confirmation. This includes containers unrelated to this project. Type `stop` when prompted to continue. |
 | `./project-tools/container-management.sh rebuild-all` | Rebuild the project images and restart its services. |
-| `./project-tools/container-management.sh test-backend [--container]` | Run backend API tests locally or inside the backend container. |
-| `./project-tools/container-management.sh test-frontend` | Run frontend API tests in a temporary container. |
+| `./project-tools/container-management.sh test-backend` | Run backend unit and API tests on the host. |
+| `./project-tools/container-management.sh test-backend --container` | Run backend handler unit tests on the host, then run backend API tests inside the running backend container. |
+| `./project-tools/container-management.sh test-frontend` | Run frontend-origin API integration tests inside a temporary container. |
 | `./project-tools/container-management.sh remove-all` | Remove stopped Compose containers and force-remove the named frontend container. It does not request removal of the PostgreSQL named volume. |
 | `./project-tools/container-management.sh help` | Show available actions. |
 
@@ -109,3 +110,4 @@ project-tools/               # Container lifecycle and test commands
 | [`PostgreSQL learnings`](LEARNINGS/postgresql-learnings.md) | Schema setup, readiness, volumes, and database troubleshooting. |
 | [`Docker/container learnings`](LEARNINGS/docker-microservices-containers-learnings.md) | Compose networking, test execution, and container troubleshooting. |
 | [`Git/GitHub learnings`](LEARNINGS/git-github-gh-commands-best-practices.md) | Branch, issue, and pull request practices. |
+| [`TODO.md`](TODO.md) | Persistent repository backlog shared across contributors, agents, and sessions. |

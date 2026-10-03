@@ -14,6 +14,7 @@ import { UsuarioDTO } from "../../../dto/UsuarioDTO";
 
 import { CreateUsuarioRequest } from "../../../dto/CreateUsuarioRequest";
 import type { ICrearUsuarioUseCase } from "../../../ports/input/usuario/ICrearUsuarioUseCase";
+import { UsuarioAlreadyExistsError } from "../../../errors/UsuarioAlreadyExistsError";
 
 export class CrearUsuarioUseCase implements ICrearUsuarioUseCase {
 
@@ -36,9 +37,7 @@ export class CrearUsuarioUseCase implements ICrearUsuarioUseCase {
         .existsByEmail(request.email);
 
     if (exists) {
-      throw new Error(
-        "El email ya existe"
-      );
+      throw new UsuarioAlreadyExistsError();
     }
 
     /*

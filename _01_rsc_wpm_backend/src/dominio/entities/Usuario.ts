@@ -6,6 +6,8 @@
 // DOMAIN - ENTIDAD RICA BLINDADA
 // ======================================================
 
+import { UsuarioValidationError } from "../errors/UsuarioValidationError";
+
 export class Usuario {
   
   // 1. CONSTRUCTOR PRIVADO: Nadie desde fuera puede hacer `new Usuario(...)`
@@ -23,10 +25,10 @@ export class Usuario {
   static crear(nombre: string, email: string): Usuario {
     // Validaciones estrictas en el nacimiento
     if (!email || !email.includes("@")) {
-      throw new Error("El formato del email es inválido para el nuevo usuario");
+      throw new UsuarioValidationError("El formato del email es inválido para el nuevo usuario");
     }
     if (!nombre || nombre.trim().length < 2) {
-      throw new Error("El nombre debe tener al menos 2 caracteres");
+      throw new UsuarioValidationError("El nombre debe tener al menos 2 caracteres");
     }
 
     // Si todo está bien, la propia clase sí puede invocar a su constructor privado
@@ -42,7 +44,7 @@ export class Usuario {
   // 4. COMPORTAMIENTO: El único punto para modificar el estado
   actualizar(nombre: string, email: string): void {
     if (!email || !email.includes("@")) {
-      throw new Error("Email inválido para actualización");
+      throw new UsuarioValidationError("Email inválido para actualización");
     }
     this._nombre = nombre.trim();
     this._email = email.trim();
