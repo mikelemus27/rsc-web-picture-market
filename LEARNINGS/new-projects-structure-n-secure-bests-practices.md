@@ -165,7 +165,80 @@ Pending / recommended:
 
 ---
 
-## 8. What this project teaches (transferable)
+## 8. Docker Compose secrets vs env_file — what actually protects what
+
+### The mechanism matters, not the file extension
+
+| Mechanism | What Docker does | Visible in `docker inspect`? | Visible in `ps e`? |
+|---|---|---|---|
+| `env_file: .env` | Parses file, sets **environment variables** | Yes — password in plaintext | Yes |
+| `secrets: file: ./secrets/db_password.txt` | Mounts file as **read-only file** at `/run/secrets/` | No — only file path shown | No |
+
+The file extension (`.txt` vs `.env`) makes no difference. What matters is the **mechanism**: `secrets:` mounts a file, `env_file:` sets an env var.
+
+### Honest threat model — what Docker secrets do and don't protect against
+
+**Docker secrets do NOT protect against:**
+- An attacker with `docker exec` access (they can `cat /run/secrets/db_password`)
+- An attacker with Docker socket access (they can read the file on the host)
+- Someone who can read application logs (if the app logs the secret)
+
+**Docker secrets DO protect against:**
+- `docker inspect` leaking the password (only shows file path, not content)
+- `docker compose config` leaking the password
+- `ps e` on the host showing the password
+- Crash dumps / error trackers that capture env vars
+- Accidental logging of environment variables
+
+**The real security boundaries** (in priority order):
+1. Don't commit secrets to Git — the biggest risk
+2. Limit Docker socket access — only trusted users should have `docker` CLI access
+3. Rotate credentials — if a secret was ever exposed, change it
+4. Network isolation — the database isn't reachable from outside the Compose network
+5. Principle of least privilege — the backend only gets the password, not the whole env
+
+### Docker Compose secrets implementation plan (for this project)
+
+**Architecture:**
+```
+_01_rsc_wpm_backend/
+├── secrets/                        # gitignored
+│   ├── db_user.txt                 # Contains: admin
+│   └── db_password.txt             # Contains: <new-password>
+├── docker-compose.yml              # uses secrets: block
+├── docker-entrypoint.sh            # bridges secret files → env vars (for backend)
+└── ...
+```
+
+**How it works:**
+1. Secret files live in `_01_rsc_wpm_backend/secrets/` (gitignored)
+2. `docker-compose.yml` defines them using `secrets:` block with `file:`
+3. PostgreSQL uses `POSTGRES_USER_FILE` and `POSTGRES_PASSWORD_FILE` (official image supports `_FILE` variants)
+4. Backend uses an entrypoint script that reads `/run/secrets/db_password` and exports it as `DB_PASSWORD` — avoids modifying application code
+5. Secrets are mounted as read-only files at `/run/secrets/` — never appear in `docker inspect` or `ps e`
+
+**Alternative (cleaner, no entrypoint script):**
+- Modify `postgres.ts` to read `DB_PASSWORD_FILE` and use `Bun.file()` to read the secret file directly
+- The password never becomes an env var — strictly more secure
+- Requires a few lines of code change in the application
+
+**Credential rotation is mandatory:**
+- The `admin123` password has been committed to Git history
+- Generate a new strong password, put it in `secrets/db_password.txt`
+- The old `admin123` in Git history should be considered compromised
+- If the repo is ever shared or pushed to a remote, history should be rewritten (separate, careful operation)
+
+### Key lessons learned
+
+- **Docker secrets are defense-in-depth, not a silver bullet.** They prevent common operational mistakes (the most common way secrets leak) but don't stop a determined attacker with container access.
+- **`env_file: .env` is acceptable for dev** when the `.env` is gitignored and credentials are rotated — but `secrets:` is strictly better for production.
+- **The file extension is irrelevant** — `.txt` and `.env` work identically with the `secrets:` block. Choose based on team convention.
+- **PostgreSQL natively supports `_FILE` env vars** (`POSTGRES_PASSWORD_FILE`, `POSTGRES_USER_FILE`) — no entrypoint script needed for the database service.
+- **For the Bun backend, prefer modifying the app** to read `DB_PASSWORD_FILE` over an entrypoint script — it's cleaner and keeps the secret as a file end-to-end.
+
+---
+
+## 9. What this project teaches (transferable)
 
 - **Branch discipline** (`fix/` vs `feat/`) is not optional for review focus.
 - **Secret hygiene** needs separate safeguards: ignored local configuration or managed secrets, non-secret setup documentation, secret exclusion, rotation after exposure, and careful history handling. Verify the current configuration; a history rewrite does not rotate credentials.
