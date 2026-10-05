@@ -79,6 +79,9 @@ Examples:
   $0 -q "SELECT * from usuario LIMIT 5"
   $0 --file queries.sql
 EOF
+  # Help is a successful outcome and must stop here. Without this the -h branch
+  # never shifts, so the argument loop spins and reprints usage forever.
+  exit 0
 }
 
 fail() {
