@@ -28,6 +28,45 @@ this plan. If any of them stop holding, update this section first.
 | Actual table shape | `id SERIAL PK`, `nombre VARCHAR(100) NOT NULL`, `email VARCHAR(100) UNIQUE NOT NULL` | Read the schema file |
 | Row count in dev | 39 | `SELECT count(*) FROM usuario` |
 | **No seed script exists** | only `01-schema.sql` | `find` for seed/insert files returned nothing |
+| **`compose ps --filter name=` is rejected** | use a positional service name instead | returns `unknown filter name`, exit 1 |
+| **Shebang must be bash** | `set -o pipefail` is not POSIX | fails under `dash` |
+
+### Critical: `docker compose ps --filter name=<svc>` does not work here
+
+Verified against this machine's compose version:
+
+```
+$ docker compose -f _01_rsc_wpm_backend/docker-compose.yml ps --filter name=postgres --format '{{.Status}}'
+unknown filter name            # exit 1
+
+$ docker compose -f _01_rsc_wpm_backend/docker-compose.yml ps postgres --format '{{.Status}}'
+Up 34 hours (healthy)          # correct
+```
+
+The service must be passed **positionally**. Two consequences:
+
+1. This script uses the positional form. It also surfaces the real `docker
+   compose ps` error instead of `|| true`-swallowing it, because a swallowed
+   error is indistinguishable from "container absent" and reports the wrong
+   cause.
+2. **`container-management.sh` has this same latent bug.** Its
+   `check_backend_running()` and `check_frontend_network()` both use
+   `--filter name=backend`, which exits 1 on this compose version — so they
+   report "Backend not running" even while the backend is up. Not fixed here,
+   because this feature is independent of that script. Worth a separate issue.
+
+### Critical: `docker compose exec` drains stdin
+
+`docker compose exec` inherits this process's stdin. Called from a
+`while read` loop over a query file, it consumes the file being read and the
+loop silently stops after the first query — with no error. Every `exec` call in
+this script therefore redirects `</dev/null`.
+
+### Shebang is bash, not sh
+
+`container-management.sh` uses `#!/usr/bin/env sh` and avoids `set -e`
+entirely. This script is specified with `set -euo pipefail`, and `pipefail` is
+not POSIX, so re-heading it to `sh` would break it under `dash`.
 
 ### Critical: NOT NULL is not in `pg_constraint` (PG 16)
 
@@ -111,7 +150,7 @@ No secret is hardcoded beyond the dev default already committed in
 
 | # | Check | Catalog / method | Pass criteria |
 |---|---|---|---|
-| 1 | Container running | `docker compose ps --filter name=$DB_SERVICE --format '{{.Status}}'` | Output contains `Up` |
+| 1 | Container running | `docker compose ps <service> --format '{{.Status}}'` (positional, not `--filter name=`) | Output contains `Up` |
 | 2 | Container healthy | `docker inspect` → `.State.Health.Status` | `healthy` (compose already defines a `pg_isready` healthcheck) |
 | 3 | Accepting connections | `pg_isready -U $DB_USER -d $DB_NAME` | Exit code 0 |
 | 4 | Database exists and sized | `SELECT pg_size_pretty(pg_database_size('$DB_NAME'))` | Query succeeds, returns non-null |
@@ -174,22 +213,21 @@ schema are read-only inputs.
 
 ## Implementation Tasks
 
-- [ ] **Task 1: Script skeleton and configuration**
-  - Shebang, `set -euo pipefail`, `REPO_ROOT` via `cd "$(dirname "$0")/.." && pwd`
-    (same idiom as `container-management.sh`)
-  - `RED`/`GREEN`/`YELLOW`/`NC` colors; auto-disable when `[[ ! -t 1 ]]`, plus a
+- [x] **Task 1: Script skeleton and configuration**
+  - Shebang `#!/usr/bin/env bash` (not `sh` — see Verified Facts), `set -euo pipefail`,
+    `REPO_ROOT` via `cd "$(dirname "$0")/.." && pwd`
+  - `RED`/`GREEN`/`YELLOW`/`NC` colors; auto-disable when stdout is not a TTY, plus a
     `--no-color` override
   - Env-var config block with the defaults in the table above
   - `COMPOSE_CMD` resolution: prefer `docker compose`, fall back to `docker-compose`
   - Preflight: fail fast with a clear message if Docker or the compose file is missing
   - `usage()` plus the argument loop (`-q`, `--query`, `--file`, `--check`, `--no-color`, `--help`)
 
-- [ ] **Task 2: Health check functions**
-  - `check_container_running()` — `ps --filter name=$DB_SERVICE`, and guard the
-    call so a non-zero exit does not trip `set -e`; the repo already uses
-    `... 2>/dev/null || { echo ...; return 1; }` for this
-  - `check_container_healthy()` — `docker inspect` the resolved container name
-    and read `.State.Health.Status`
+- [x] **Task 2: Health check functions**
+  - `check_container_running()` — positional service form, surfacing the real compose
+    error instead of swallowing it
+  - `check_container_healthy()` — `docker inspect` the container ID from
+    `compose ps -q` and read `.State.Health.Status`
   - `check_pg_ready()` — `pg_isready` inside the container, wrapped in `timeout`
   - `check_database_size()` — `pg_database_size`, wrapped in `timeout`
   - `check_table_exists()` — `to_regclass`
@@ -199,27 +237,49 @@ schema are read-only inputs.
     `is_nullable` (see the catalog split above — do not merge these)
   - `check_data_readable()` — print the row count; warn without failing when 0
 
-- [ ] **Task 3: Query mode**
-  - `run_query()` — one SQL string via `psql -c`, wrapped in `timeout`
+- [x] **Task 3: Query mode**
+  - `run_query()` — one SQL string via `psql -c`, wrapped in `timeout`, stdin
+    detached with `</dev/null`
   - `run_query_file()` — line-numbered read, skipping blanks and `#` comments,
     reporting the failing line number
   - Support repeated `-q` flags, executed in order
 
-- [ ] **Task 4: Runner, filtering, and exit codes**
+- [x] **Task 4: Runner, filtering, and exit codes**
   - `run_check()` — timing, PASS/FAIL, color, pass/fail tallies
-  - `--check` filter over a `name -> function` registry
+  - `--check` filter validated against the registry, rejecting unknown names
   - Summary line; exit 0 on full pass, 1 on any failure
 
-- [ ] **Task 5: Test the script**
-  - Stack up: `./project-tools/container-management.sh start-all`
-  - Full suite — expect 8/8 against the running dev database
-  - `--check container,pg_ready` — expect exactly 2 checks to run
-  - `-q "SELECT * FROM usuario LIMIT 3"` — expect a table
-  - `--file` with several queries — expect sequential execution
-  - `--file` with one bad query — expect the line number in the failure
-  - Stack down — expect a clean FAIL on check 1, not a crash or a hang
-  - Invalid SQL — expect a clear psql error and exit 1
-  - `--no-color`, and piped output — expect no ANSI escapes in either case
+- [x] **Task 5: Test the script** — all verified against the running stack
+
+| Scenario | Expected | Result |
+|---|---|---|
+| Full suite | 8/8, exit 0 | 8/8, exit 0 |
+| `--check container,pg_ready` | exactly 2 checks | 2/2, exit 0 |
+| `-q "SELECT * FROM usuario LIMIT 3"` | table | 3-row table, exit 0 |
+| Two `-q` flags | both run in order | both ran |
+| `--file` with comments + blanks | comments/blanks skipped, both queries run | ran lines 2 and 4 |
+| `--file` with a bad query | failing line number, exit 1 | `Query failed at line 2`, exit 1 |
+| Invalid SQL via `-q` | clear psql error, exit 1 | error shown, exit 1 |
+| `--check` + `-q` together | rejected | error, exit 1 |
+| Unknown check name | rejected with the valid list | error listed all 8 names |
+| Missing compose file | rejected with override hint | error, exit 1 |
+| Container absent (`DB_SERVICE=ghost`) | clean FAILs, no crash or hang | 0/8, real error surfaced |
+| Queries with container absent | actionable message, exit 1 | error, exit 1 |
+| `--no-color` under a TTY | no ANSI codes | 0 codes |
+| Piped output | no ANSI codes | 0 codes |
+| Default under a TTY | ANSI codes present | present |
+| Empty table | PASS + WARN, **exit 0** | `1/1 checks passed, 1 warning(s)` |
+| Required cols + extra cols | PASS | PASS |
+| Required col missing | FAIL | `Unusable columns: email(absent)` |
+| Wrong varchar length | FAIL | `got character varying\|50, want ...\|100` |
+| NOT NULL absent, PK+UNIQUE present | FAIL | `NOT-NULL-nombre NOT-NULL-email` |
+| Full constraint set | PASS | PASS |
+| Extra index + CHECK constraint added | PASS (drift-tolerant) | PASS |
+
+Drift cases were exercised against a scratch table (`zz_healthcheck_probe`),
+created and dropped inside the same command so cleanup always ran. `usuario` was
+never modified. The "container absent" cases were exercised with
+`DB_SERVICE=ghost` rather than stopping the running stack.
 
 ## Not Included (Future Work)
 
