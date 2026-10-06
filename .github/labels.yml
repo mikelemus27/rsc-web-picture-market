@@ -63,7 +63,7 @@ labels:
   # already exists but does not work correctly. The work should normally
   # include reproduction information, identification of the cause when
   # possible, the corrective change, and regression tests when appropriate.
-  - name: "type:bug"
+  - name: "type:fixbug"
     color: "D73A4A"
     description: >
       Repairs behavior that is broken or inconsistent with intent. For
@@ -128,7 +128,7 @@ labels:
   #
   # Example:
   #
-  #   type:bug
+  #   type:fixbug
   #   priority:critical
   #   area:backend
   #
