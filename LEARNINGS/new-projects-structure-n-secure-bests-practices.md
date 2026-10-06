@@ -86,7 +86,11 @@ Do not treat this section as confirmation that current Compose files use environ
 ## 4. CI / CD pipeline (historically missing; re-check before acting)
 
 ### What is achievable / missing (historical snapshot)
-- No `github/workflows/` was present when this note was written. The repository scan on 2026-10-02 found no workflow files; inspect `.github/workflows/` again before adding CI.
+- No `github/workflows/` was present when this note was written. The repository scan on 2026-10-02 found no workflow files.
+  - **Update 2026-10-06:** two workflows now exist on `dev` — `validate-labels.yml` (validation gate, `contents: read`) and
+    `sync-labels.yml` (label applier, `issues: write`). Both are scoped by `paths:` to label governance only. There is still
+    **no build/test CI** — nothing runs `bun` tests or `tsc --noEmit` on a pull request. Inspect `.github/workflows/` again
+    before adding CI, and expect to add the missing test workflow rather than discover one.
 - The original notes recorded a `test:suite` command (`bun run src/index.ts`) that was not automated.
 - The original notes recorded `tsc --noEmit` passing (frontend `0` errors).
 - The original notes recorded `test_debug.ts` (backend) and `test:suite` (frontend) as not run in CI. These commands/results are historical; use current READMEs for supported test commands.
