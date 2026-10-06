@@ -1,0 +1,42 @@
+name: Validate label definitions
+
+# Validating and applying are different operations, so they live in different
+# workflows. This one only asks "is labels.yml well formed?" and never writes
+# to GitHub. sync-labels.yml is the only thing that mutates labels.
+#
+# The path list deliberately includes sync-labels.yml. Its own `paths` filter
+# means a change to that workflow does not trigger it, so a broken apply step
+# could otherwise sit unnoticed until someone edits labels.yml. This workflow
+# is what makes such a change visible.
+
+on:
+  push:
+    paths:
+      - ".github/labels.yml"
+      - ".github/workflows/sync-labels.yml"
+      - ".github/scripts/validate-labels.sh"
+      - ".github/workflows/validate-labels.yml"
+  pull_request:
+    paths:
+      - ".github/labels.yml"
+      - ".github/workflows/sync-labels.yml"
+      - ".github/scripts/validate-labels.sh"
+      - ".github/workflows/validate-labels.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-labels:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Validate label definitions
+        run: .github/scripts/validate-labels.sh
