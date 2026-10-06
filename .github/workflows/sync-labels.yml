@@ -25,7 +25,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          yq -o=json '.labels[]' .github/labels.yml |
+          # -I=0 emits one compact JSON object per line. Without it yq
+          # pretty-prints each label across many lines, and the read below
+          # then feeds jq line fragments instead of whole objects.
+          yq -o=json -I=0 '.labels[]' .github/labels.yml |
           while read -r label; do
 
             name=$(echo "$label" | jq -r '.name')
