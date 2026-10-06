@@ -524,7 +524,7 @@ the right default for this repository too.
 `~/.agents/skills/git-workflow/scripts/pr-merge.sh` is what was used to merge #18 and #19.
 
 ```bash
-# line 244-246
+# line 243-246
 CMD=(gh pr merge "$PR" --repo "$REPO" "$METHOD")
 if [ "$QUEUE" != "true" ] && [ "$CROSS" != "true" ] && [ -z "$STACKED" ] && [ -z "$STACKED_UNKNOWN" ]; then
   CMD+=(--delete-branch)
@@ -541,8 +541,9 @@ OUT=$("${CMD[@]}" 2>&1); RC=$?
 - **The deletion is silent on success.** `OUT` captures everything `gh` printed (including
   `Deleted branch …`) and is only printed when the exit code is non-zero. The success path throws
   it away, so the merge output showed only `merged (--merge)`.
-- There is **no flag and no environment variable** to disable it — `--help` accepts only the PR
-  number, `-R`, `--dry-run` and `--self-reviewed`.
+- There is **no flag and no environment variable** to disable it. The complete set of switches is
+  `-R`/`--repo`, `--dry-run`, `--self-reviewed`, `--version` and `-h`/`--help` — any other flag dies
+  with `unknown flag` and exit 2 — and none of them turns deletion off.
 - `--self-reviewed` posts a `Self-review: <head-sha>` attestation comment as the PR author, then
   merges. It is refused when a live review path exists or when the authenticated user is not the
   PR author.
@@ -562,10 +563,13 @@ directly and decide the deletion yourself.
 - Record honestly what could not be reproduced. For #19 the 54-case verification harness no longer
   exists on disk, and the review says so rather than repeating the figure as if it were re-run.
 - Separate blockers from notes. The two findings on #19 were recorded explicitly as **"Notes, not
-  blockers"**: `date +%s%N` (line 346) is GNU-only and returns a literal `N` on macOS/BSD, where the
-  arithmetic expansion aborts under `set -e`; and line 506 sets `NO_COLOR="false"` in the `-h`
-  branch, clobbering a prior `--no-color` (invisible today because `usage()` prints no color
-  codes). Writing these up as blockers would have been as wrong as dropping them.
+  blockers"**, both in `project-tools/db-healthcheck.sh`: line 346's `date +%s%N` is GNU-only and
+  returns a literal `N` on macOS/BSD, where the arithmetic expansion aborts under `set -e` — with the
+  reviewer's own qualifier that the tool targets Linux/Docker, so it is a portability limit and not a
+  defect there; and line 506 sets `NO_COLOR="false"` in the `-h` branch, clobbering a prior
+  `--no-color` (no visible effect today because `usage()` prints no color codes). Writing these up as
+  blockers would have been as wrong as dropping them — and dropping the qualifier would have made the
+  first note read as a bug it is not.
 
 ### 29. Never publish a claim you have not verified
 
