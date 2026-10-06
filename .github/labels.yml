@@ -1,0 +1,274 @@
+# =============================================================================
+# Repository Label Governance
+# =============================================================================
+#
+# This file defines the official labels used to classify GitHub Issues and
+# Pull Requests in this repository.
+#
+# Labels are organized into dimensions:
+#
+#   type     -> What kind of work is being performed?
+#   priority -> How urgent/important is the work?
+#   area     -> Which part of the system is affected?
+#
+# IMPORTANT:
+# - This file is declarative. GitHub does NOT interpret it automatically.
+# - A GitHub Action or external synchronization script must read this file
+#   and create/update the corresponding GitHub labels.
+# - Agents MUST NOT create new governance labels unless explicitly authorized.
+# - Agents SHOULD use existing labels whenever they match the work.
+#
+# HARD CONSTRAINT — READ BEFORE EDITING:
+# - GitHub rejects any label description longer than 100 characters with
+#   "HTTP 422 Validation Failed: description is too long". Every description
+#   below is therefore kept at 100 characters or fewer. The full policy text
+#   for each label is retained in the section comments immediately preceding
+#   it, so nothing is lost when the description is shortened.
+# - Keep the folded block scalar (">") style, and re-check the length after
+#   any edit. Verify with:
+#     python3 -c "import yaml;[print(len(l['name']),len(l.get('description','')),l['name']) for l in yaml.safe_load(open('.github/labels.yml'))['labels']]"
+#
+# =============================================================================
+
+
+labels:
+
+  # ===========================================================================
+  # TYPE
+  # ===========================================================================
+  #
+  # Defines WHAT kind of work the Issue or Pull Request represents.
+  #
+  # These labels describe the nature of the change, not its urgency or
+  # affected subsystem.
+  #
+  # An Issue should normally have one primary "type:*" label.
+  #
+  # ===========================================================================
+
+  # Policy: introduces a new user-visible capability, behavior, workflow, or
+  # functionality that did not previously exist. Use when the primary purpose
+  # is to extend the system's capabilities rather than repair existing
+  # behavior or restructure existing implementation. May include new source
+  # code, configuration, tests, documentation, or infrastructure when those
+  # changes are necessary to deliver the capability.
+  - name: "type:feature"
+    color: "1D76DB"
+    description: >
+      New user-visible capability that did not previously exist. Extends rather
+      than repairs.
+
+  # Policy: corrects behavior that is incorrect, unexpected, broken, or
+  # inconsistent with documented or intended behavior. Use when functionality
+  # already exists but does not work correctly. The work should normally
+  # include reproduction information, identification of the cause when
+  # possible, the corrective change, and regression tests when appropriate.
+  - name: "type:fixbug"
+    color: "D73A4A"
+    description: >
+      Repairs behavior that is broken or inconsistent with intent. For
+      existing but faulty functionality.
+
+  # Policy: changes internal structure, organization, readability,
+  # maintainability, or design of existing code without intentionally changing
+  # externally observable behavior. Examples include extracting functions or
+  # classes, reorganizing modules, simplifying complex code, improving
+  # abstractions, removing duplication, or applying design patterns. A
+  # refactor should preserve existing behavior unless the Issue explicitly
+  # states otherwise.
+  - name: "type:refactor"
+    color: "5319E7"
+    description: >
+      Restructures existing code without changing observable behavior. Improves
+      design and readability.
+
+  # Policy: primarily adds, modifies, reorganizes, or improves automated or
+  # manual tests. Use when testing itself is the principal purpose of the
+  # work, including unit, integration, end-to-end, regression, property-based
+  # tests, fixtures, mocks, or test infrastructure. If tests merely support
+  # another type of change, use the primary work type instead.
+  - name: "type:test"
+    color: "0E8A16"
+    description: >
+      Adds or improves automated or manual tests. Use when testing itself is
+      the main purpose of the work.
+
+  # Policy: primarily creates, updates, reorganizes, or corrects
+  # documentation. Includes README files, architecture documentation, API
+  # documentation, installation instructions, development guides, agent
+  # instructions, contribution guidelines, operational procedures, and
+  # technical explanations. Use when documentation is the main purpose of the
+  # work rather than a secondary part of another change.
+  - name: "type:docs"
+    color: "0075CA"
+    description: >
+      Documentation is the main purpose of the work, not a secondary part of
+      another change.
+
+  # Policy: covers maintenance or operational work that is not a new feature,
+  # bug fix, refactor, test-focused change, or documentation-focused change.
+  # Examples include dependency maintenance, repository housekeeping, build
+  # configuration changes, tooling updates, formatting configuration,
+  # development environment maintenance, generated files, or routine
+  # engineering tasks.
+  - name: "type:chore"
+    color: "BFDADC"
+    description: >
+      Maintenance and operational work: dependencies, housekeeping, build config,
+      tooling.
+
+
+  # ===========================================================================
+  # PRIORITY
+  # ===========================================================================
+  #
+  # Defines HOW IMPORTANT or URGENT the work is.
+  #
+  # Priority is independent of type and area.
+  #
+  # Example:
+  #
+  #   type:fixbug
+  #   priority:critical
+  #   area:backend
+  #
+  # A bug does not automatically imply high or critical priority.
+  #
+  # Normally an Issue should have exactly one "priority:*" label.
+  #
+  # ===========================================================================
+
+  # Policy: requires immediate attention because the problem or requested work
+  # has severe consequences for the system, users, security, data integrity,
+  # production availability, or other essential project objectives. Critical
+  # work may block releases or normal operation and should be addressed before
+  # lower-priority work. Examples include production outages, critical security
+  # vulnerabilities, severe data corruption, or complete loss of a fundamental
+  # system capability.
+  - name: "priority:critical"
+    color: "B60205"
+    description: >
+      Severe consequences: outages, security holes, data corruption, or loss of
+      a fundamental capability.
+
+  # Policy: important work that should be addressed soon and normally takes
+  # precedence over medium- and low-priority work. May significantly affect
+  # users, development progress, reliability, maintainability, or an important
+  # milestone, but does not normally require immediate emergency intervention.
+  - name: "priority:high"
+    color: "D93F0B"
+    description: >
+      Important and soon: significantly affects users or progress, but is not
+      an emergency.
+
+  # Policy: normal-priority work that should be completed as part of the
+  # project's regular development process. Has meaningful value but does not
+  # currently justify interrupting critical or high-priority work. This is the
+  # default priority for ordinary features, improvements, bugs, and maintenance
+  # tasks when no stronger urgency has been established.
+  - name: "priority:medium"
+    color: "FBCA04"
+    description: >
+      Normal work for the regular development process. The default when no
+      stronger urgency applies.
+
+  # Policy: work that is useful but has limited immediate impact or urgency.
+  # Can normally be scheduled after higher-priority work has been completed.
+  # Examples include minor improvements, cosmetic changes, non-essential
+  # optimizations, convenience features, or technical cleanup with limited
+  # short-term impact.
+  - name: "priority:low"
+    color: "C5DEF5"
+    description: >
+      Useful but low impact or urgency. Schedulable after higher-priority work.
+
+
+  # ===========================================================================
+  # AREA
+  # ===========================================================================
+  #
+  # Defines WHICH PART OF THE SYSTEM is primarily affected.
+  #
+  # Area is independent of type and priority.
+  #
+  # Example:
+  #
+  #   type:feature
+  #   priority:medium
+  #   area:frontend
+  #
+  # An Issue may have more than one area label when the change genuinely spans
+  # multiple subsystems.
+  #
+  # ===========================================================================
+
+  # Policy: work primarily affecting the user-facing or client-side portion of
+  # the application. Includes web, desktop, and mobile interfaces, UI
+  # components, views, styling, client-side state management, browser behavior,
+  # accessibility, user interaction, and frontend-specific build or runtime
+  # configuration.
+  - name: "area:frontend"
+    color: "A2EEEF"
+    description: >
+      User-facing or client-side work: web, desktop and mobile UI, styling,
+      client state, a11y.
+
+  # Policy: work primarily affecting server-side application logic or services.
+  # Includes APIs, business logic, domain services, authentication,
+  # authorization, server-side processing, data access, background jobs,
+  # application services, backend validation, and other code executed outside
+  # the primary user interface.
+  - name: "area:backend"
+    color: "7057FF"
+    description: >
+      Server-side work: APIs, business logic, domain services, auth, data access,
+      background jobs.
+
+  # Policy: work primarily affecting infrastructure, deployment, runtime
+  # environments, containers, virtual machines, networking, databases, cloud
+  # resources, observability, CI/CD infrastructure, system configuration,
+  # development environments, or operational tooling. Use when the primary
+  # concern is how the software is built, deployed, executed, or operated.
+  - name: "area:infra"
+    color: "5319E7"
+    description: >
+      Infrastructure and operations: deployment, containers, networks,
+      databases, CI/CD.
+
+  # Policy: work primarily affecting GitHub repository configuration,
+  # collaboration, governance, automation, permissions, Issues, Pull Requests,
+  # labels, Actions, branch protection, CODEOWNERS, repository policies,
+  # GitHub Apps, webhooks, or other GitHub-specific functionality. Use when the
+  # repository platform itself is the primary subject of the work rather than
+  # the application being developed.
+  - name: "area:github"
+    color: "24292F"
+    description: >
+      GitHub platform work: repo configuration, Actions, permissions, policies,
+      GitHub Apps.
+
+
+# =============================================================================
+# GOVERNANCE RULES
+# =============================================================================
+#
+# The labels above define the currently approved classification vocabulary.
+#
+# Agents and automation SHOULD:
+#
+#   1. Prefer existing labels over creating new labels.
+#   2. Use the type:* dimension to describe the nature of the work.
+#   3. Use the priority:* dimension to describe urgency or importance.
+#   4. Use the area:* dimension to identify affected subsystems.
+#   5. Avoid assigning labels that do not accurately describe the work.
+#   6. Avoid creating new labels without explicit authorization.
+#
+# Humans MAY modify this file through the repository's normal review process.
+#
+# Changes to this file are governance changes because they modify the official
+# classification vocabulary of the repository.
+#
+# A synchronization workflow may use this file as the source of truth for
+# creating or updating GitHub labels.
+#
+# =============================================================================
