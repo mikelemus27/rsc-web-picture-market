@@ -590,3 +590,18 @@ Corollaries used repeatedly in this session:
   `gh label list`, `git ls-tree`, or the script.
 - Never supply a cause because it is plausible. Ask which artefact would settle it, read that
   artefact, then explain.
+
+### 30. Prove the checker can actually fail — build a mutation harness
+
+When a CI script (`validate-labels.sh`) is the gate, you cannot trust "it passes" unless you can prove it would also fail if it were wrong. For deterministic gates, write a tiny mutation harness that:
+
+- **Gates on a healthy baseline.** Do not run a single negative case until the pristine input passes.
+- **Verifies each mutation took effect.** Call `fault_N_mutate` and `fault_N_verify` independently — a mutation that silently did nothing must not be reported as a detection.
+- **Matches reasons on failure lines.** Capture `✗` lines separately (`failure_lines=$(printf '%s\n' "$RUN_OUTPUT" | grep -F '✗' || true)`) and test against those. Whole-output substring matching creates false positives (a passing `✓` line can satisfy the expected reason). Also handle the case where no `✗` line is emitted (explicit diagnostic).
+- **Proves restoration.** Compare checksums (`sha256sum`) of pristine vs restored copies — `cp` success is not enough.
+- **Runs two resistance tests.** (A) an always-pass validator must make the harness fail (`faults caught 0`, `EXIT != 0`); (B) neutering exactly one check must make that fault report `WRONG REASON` (or `NOT DETECTED`) and reduce `faults caught`. If either passes, the harness itself is broken.
+- **Keep mutation isolated.** Use a temp directory (`mktemp -d`), copy pristine files there, run everything there; no `eval`. Prefer `set -uo pipefail` and two-step `grep … || true` when a pipeline may produce zero matches.
+
+Practical note: `fail()` writes `  ✗ %s` to stderr, `pass()` writes `  ✓ %s` to stdout — `run_validator` must capture `2>&1` so both appear in `RUN_OUTPUT`.
+
+Repository example: `.github/scripts/test-validate-labels.sh` (717 lines) proves 7 faults for `validate-labels.sh`. It caught its own false-positive (whole-output reason match) via test (B).
