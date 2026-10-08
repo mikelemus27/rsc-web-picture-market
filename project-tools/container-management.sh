@@ -33,14 +33,14 @@ usage() {
 
 check_backend_running() {
   docker compose -f "$BACKEND_COMPOSE" ps --filter name=backend --format '{{.Status}}' 2>/dev/null | grep -q "Up" || {
-    echo -e "${RED}❌ Backend not running.${NC} Run '$0 start-all' first."
+    printf '%b\n' "${RED}❌ Backend not running.${NC} Run '$0 start-all' first."
     exit 1
   }
 }
 
 check_frontend_network() {
   docker compose -f "$BACKEND_COMPOSE" ps --filter name=backend --format '{{.Status}}' 2>/dev/null | grep -q "Up" || {
-    echo -e "${RED}❌ Backend container not found or not running.${NC}"
+    printf '%b\n' "${RED}❌ Backend container not found or not running.${NC}"
     exit 1
   }
 }
@@ -72,7 +72,7 @@ run_show() {
 # attached to a deleted network, compose project not found, ...). It must use
 # the same network as the compose file or the backend is unreachable.
 frontend_fallback() {
-  echo -e "${GREEN}compose up failed; falling back to docker run on $FRONTEND_NETWORK:${NC}"
+  printf '%b\n' "${GREEN}compose up failed; falling back to docker run on $FRONTEND_NETWORK:${NC}"
   docker rm -f 02_rsc_wp_bun_vue_frontend 2>/dev/null
   run_show 1 docker run -d --name 02_rsc_wp_bun_vue_frontend \
     --network "$FRONTEND_NETWORK" \
@@ -86,7 +86,7 @@ frontend_fallback() {
 # The backend must be running. The frontend is not a daemon: its CMD runs the
 # API test suite and exits, so requiring it to be Up would always fail.
 verify_stack() {
-  echo -e "${GREEN}=== Verifying ===${NC}"
+  printf '%b\n' "${GREEN}=== Verifying ===${NC}"
 
   backend_id="$(docker compose -f "$BACKEND_COMPOSE" ps -q backend 2>/dev/null)"
   if [ -z "$backend_id" ] || [ "$(docker inspect -f '{{.State.Running}}' "$backend_id" 2>/dev/null)" != "true" ]; then
@@ -115,14 +115,14 @@ verify_stack() {
 
 case "$1" in
   start-all)
-    echo -e "${GREEN}=== Starting backend ===${NC}"
+    printf '%b\n' "${GREEN}=== Starting backend ===${NC}"
     run_show 1 docker compose -f "$BACKEND_COMPOSE" build backend || {
       print_error "Backend image build failed."
     }
     run_show 1 docker compose -f "$BACKEND_COMPOSE" up -d backend || {
       print_error "Backend did not start."
     }
-    echo -e "${GREEN}=== Starting frontend ===${NC}"
+    printf '%b\n' "${GREEN}=== Starting frontend ===${NC}"
     # --force-recreate: a frontend container left attached to a deleted network
     # makes plain `up` fail with "network ... not found". It is a one-shot job,
     # so recreating it costs nothing.
@@ -133,7 +133,7 @@ case "$1" in
     ;;
 
   stop-all)
-    echo -e "${GREEN}=== Stopping all ===${NC}"
+    printf '%b\n' "${GREEN}=== Stopping all ===${NC}"
     docker compose -f "$BACKEND_COMPOSE" stop 2>/dev/null || true
     docker stop 02_rsc_wp_bun_vue_frontend 2>/dev/null || true
     ;;
@@ -183,14 +183,14 @@ case "$1" in
     ;;
 
   remove-all)
-    echo -e "${GREEN}=== Removing all ===${NC}"
+    printf '%b\n' "${GREEN}=== Removing all ===${NC}"
     docker compose -f "$BACKEND_COMPOSE" rm -f 2>/dev/null || true
     docker rm -f 02_rsc_wp_bun_vue_frontend 2>/dev/null || true
-    echo -e "${GREEN}=== Done ===${NC}"
+    printf '%b\n' "${GREEN}=== Done ===${NC}"
     ;;
 
   rebuild-all)
-    echo -e "${GREEN}=== Rebuild backend ===${NC}"
+    printf '%b\n' "${GREEN}=== Rebuild backend ===${NC}"
     # One action, one build mode: both services rebuild with --no-cache.
     # (No `docker rmi` before the build: it fails for in-use images and does
     # not clear BuildKit's cache — --no-cache is the real lever.)
@@ -201,7 +201,7 @@ case "$1" in
       print_error "Backend did not start after rebuild."
     }
     sleep 2
-    echo -e "${GREEN}=== Rebuild frontend ===${NC}"
+    printf '%b\n' "${GREEN}=== Rebuild frontend ===${NC}"
     run_show 1 docker compose -f "$FRONTEND_COMPOSE" build --no-cache frontend || {
       print_error "Frontend image build failed."
     }
@@ -212,7 +212,7 @@ case "$1" in
     ;;
 
   test-frontend)
-    echo -e "${GREEN}=== Running frontend tests ===${NC}"
+    printf '%b\n' "${GREEN}=== Running frontend tests ===${NC}"
     docker compose -f "$FRONTEND_COMPOSE" run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts 2>&1
     ;;
 
@@ -223,11 +223,11 @@ case "$1" in
     fi
     case "${1:-}" in
       "")
-        echo -e "${GREEN}=== Running backend tests locally ===${NC}"
+        printf '%b\n' "${GREEN}=== Running backend tests locally ===${NC}"
         cd "$REPO_ROOT/_01_rsc_wpm_backend" && bun run test:all 2>&1
         ;;
       --container)
-        echo -e "${GREEN}=== Running backend tests inside the container ===${NC}"
+        printf '%b\n' "${GREEN}=== Running backend tests inside the container ===${NC}"
         cd "$REPO_ROOT/_01_rsc_wpm_backend" && bun run test:all -- --container 2>&1
         ;;
       *)

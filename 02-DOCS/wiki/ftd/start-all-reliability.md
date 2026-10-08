@@ -27,6 +27,9 @@ In:
   `Up` — verification must not grep `docker ps` for a running frontend. Backend must be running;
   frontend is reported, not asserted as Up.
 - Move the `TODO.md` item to Completed with observed evidence.
+- Replace `echo -e` with `printf '%b\n'`: `/bin/sh` is dash here, dash's `echo` does not know the
+  `-e` flag, so every colour line printed a literal `-e` in front of it (pre-existing, and the new
+  lines would have shipped the same defect).
 
 Out (tracked separately in `TODO.md`):
 
@@ -58,6 +61,9 @@ Out (tracked separately in `TODO.md`):
 - [x] 5. `sh -n project-tools/container-management.sh` passes → **observed:** exit 0.
 - [x] 6. `TODO.md` start-all item checked with the observed evidence →
       **observed:** item moved to `## Completed` with the recorded results.
+- [x] 7. Colour output carries no stray `-e` under dash →
+      **observed:** 14 `echo -e` replaced by `printf '%b\n'`; re-run prints clean colour lines and
+      `grep -c "echo -e"` returns 0 (Evidence 7).
 
 ## Evidence
 
@@ -96,19 +102,36 @@ Error: Backend is not running.
 PROBE_C_exit=1
 ```
 
-**6. Real `start-all`** (exit 0, backend untouched — still `Up 12 hours`, frontend recreated):
+**6. Real `start-all`, first run** (exit 0, backend untouched — still `Up 12 hours`, frontend
+recreated). Note the stray `-e`: that is the pre-existing `echo -e` defect under dash, visible in
+every line the script prints:
 ```
-=== Starting backend ===
+-e [0;32m=== Starting backend ===[0m
  Image 01_rsc_wpm_backend-backend Built
  Container 01_rsc_wpm_backend-postgres Healthy
-=== Starting frontend ===
+-e [0;32m=== Starting frontend ===[0m
  Container 02_rsc_wp_bun_vue_frontend Starting
  Container 02_rsc_wp_bun_vue_frontend Started
-=== Verifying ===
+-e [0;32m=== Verifying ===[0m
 backend: running
 frontend: exited 0 (its CMD is the frontend test suite)
 START_ALL_exit=0
 ```
+
+**7. After replacing `echo -e` with `printf '%b\n'`** — same run, no stray `-e`, colours intact:
+```
+[0;32m=== Starting backend ===[0m
+ Image 01_rsc_wpm_backend-backend Built
+ Container 01_rsc_wpm_backend-postgres Healthy
+[0;32m=== Starting frontend ===[0m
+ Container 02_rsc_wp_bun_vue_frontend Starting
+ Container 02_rsc_wp_bun_vue_frontend Started
+[0;32m=== Verifying ===[0m
+backend: running
+frontend: exited 0 (its CMD is the frontend test suite)
+START_ALL_exit=0
+```
+`sh -n` re-run after the change: `exit=0`; `grep -c "echo -e"`: `0`.
 
 Not run: the full backend/frontend test suites — this change touches no application code, only the
 script. The suites stay as the gate for the separate 8-defect item in `TODO.md`.
