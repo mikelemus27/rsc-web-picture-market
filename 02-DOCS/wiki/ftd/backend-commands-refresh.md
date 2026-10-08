@@ -73,6 +73,14 @@ fixed long ago, so the sheet documents broken behaviour as if it were current.
 | Credentials in Compose | `docker compose config` → 8 `/run/secrets/` paths, **0** password occurrences; `printenv \| grep ^DB_` in the container → only `*_FILE` paths |
 | Every documented command | executed end to end: `ps`, `top`, `logs`, `exec`, `psql` (`\d usuario`, `select`), `pg_isready`, `getent hosts postgres`, `docker inspect` (Mounts + Env), `docker compose config`, `network`/`volume inspect`, all `curl` probes, `bun test`, `bunx tsc --noEmit` |
 | `bun test` (plain, as documented) | 21 pass, 0 fail — matches the sheet |
+| Backend, container mode | `container-management.sh test-backend --container` → 10 unit pass + 11 API pass = **21 pass, 0 fail** |
+| Frontend suite | `container-management.sh test-frontend` → 11 pass, 0 fail, exit 0 |
+| Database checks | `bash project-tools/db-healthcheck.sh` → **8/8 checks passed** (`wpm_db`, table `usuario`, 1 row, schema and constraints OK) |
+| Shell harness | `project-tools/tests/container-management.test.sh` → All 13 assertions passed |
+
+The full battery was re-run **on this branch** rather than inherited from the previous one: **53 green
+checks** (backend 21 + frontend 11 + harness 13 + db-healthcheck 8). A docs-only change cannot break
+them, but the sheet describes this exact stack, so its claims are backed by a live run.
 | Internal DNS | `getent hosts postgres` → `192.168.0.2 postgres` (service name resolves) |
 
 ## Next step
