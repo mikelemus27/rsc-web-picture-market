@@ -1,159 +1,218 @@
-Levanta solo Postgres usando tu docker-compose.yml (que sí tiene ports: "5432:5432"):
-bash
+# Comandos — backend (Bun + PostgreSQL)
 
-docker compose up -d postgres
+Comandos **directos**: `docker`, `docker compose`, `psql`, `curl` y `bun`, tal cual se
+ejecutan. Sin harness ni scripts intermedios.
 
--------------------------------------------------
-Mira qué contenedores existen ahora:
-bash
+Todos los ejemplos se ejecutan **desde este directorio** (`_01_rsc_wpm_backend/`), que es
+donde vive `docker-compose.yml`. Desde la raíz del repo, añade
+`-f _01_rsc_wpm_backend/docker-compose.yml` a cada `docker compose ...` (o usa
+`--project-directory _01_rsc_wpm_backend`) y antepón `_01_rsc_wpm_backend/` a las rutas.
 
-docker ps -a
-Localiza el de Postgres (imagen postgres:16-alpine) y copia su NOMBRE o ID.
+## Contexto del stack
 
-Saca la IP con ese nombre/ID (ejemplo usando el nombre que te salga en NAMES):
+| Qué | Valor actual |
+| --- | --- |
+| Servicio API | `backend` → contenedor `01_rsc_wpm_bun_psgres-backend`, host `4001` |
+| Servicio DB | `postgres` → contenedor `01_rsc_wpm_backend-postgres`, host `5432` |
+| Imagen DB | `postgres:16-alpine` |
+| Base de datos | `wpm_db` |
+| Tabla | `usuario` (singular) → `id`, `nombre`, `email` |
+| Credenciales | `secrets/db_user.txt` y `secrets/db_password.txt` → montadas en `/run/secrets/`; nunca en variables de entorno ni en `inspect` |
+| Red | `01_rsc_wpm_backend_rsc-network` (nombre real del `rsc-network` del proyecto) |
+| Volumen | `01_rsc_wpm_backend_postgres_data` |
+| Esquema inicial | `db/init/01-schema.sql` (se aplica **solo** si el volumen está vacío) |
+| Host del backend visto desde el frontend | `01_rsc_wpm_bun_psgres-backend:4001` |
 
-bash
+## Levantar y parar
 
-docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' NOMBRE_DEL_CONTENEDOR_POSTGRES
+```bash
+docker compose up -d postgres          # solo la base de datos
+docker compose up -d                   # el stack completo (db + api)
+docker compose up -d --build           # reconstruye imágenes y levanta
 
----------------------------------------------------
-ejecutar  todo los  servicios de  docker compose.yml
-sudo docker compose up --build
-------------------------------------------------------------
-ver las  redes 
+# reconstrucción limpia de un servicio (sin caché de build)
+docker compose build --no-cache backend
+docker compose up -d --force-recreate backend
 
-sudo docker network ls
+docker compose stop backend            # parar sin borrar
+docker compose restart backend
+docker compose down                    # baja el stack, CONSERVA el volumen
+docker compose down -v                 # ⚠ borra postgres_data: se pierden TODOS los datos
+```
 
------------------------------ 
-ver todos los  volumes
+## Estado y logs
 
-sudo docker volume ls
+```bash
+docker compose ps                      # servicios del proyecto
+docker compose ps --all                # incluye contenedores parados
+docker compose logs -f backend         # seguir los logs de la API
+docker compose logs --tail=50 postgres
+docker compose top                     # procesos dentro de los contenedores
+```
 
-----------------------------
+Salida actual esperada de `docker compose ps`:
 
+```text
+SERVICE    NAME                            STATUS                 PORTS
+postgres   01_rsc_wpm_backend-postgres     Up (healthy)           0.0.0.0:5432->5432/tcp
+backend    01_rsc_wpm_bun_psgres-backend   Up                     0.0.0.0:4001->4001/tcp
+```
 
-postgress
+## Shells dentro de los contenedores
 
-crear la bd: 
-sudo docker exec -i 06_practica-microservicio-bun_hexa_userapi_ok-postgres-1 psql -U admin -d escuela
+```bash
+docker compose exec backend sh         # Alpine: sh, no bash
+docker compose exec postgres bash      # Debian: bash
+docker compose exec -T backend sh -c 'ls /app'
+```
 
-conectarse a la bd escuela
-$ sudo docker exec -it 06_practica-microservicio-bun_hexa_userapi_ok-postgres-1 psql -U admin -d escuela
+## PostgreSQL directo
 
+```bash
+# sesión interactiva (la conexión local del contenedor usa el socket interno, sin contraseña)
+docker compose exec postgres psql -U "$(cat secrets/db_user.txt)" -d wpm_db
 
-escuela=# CREATE TABLE usuario (
+# comandos sueltos, sin entrar
+docker compose exec -T postgres psql -U "$(cat secrets/db_user.txt)" -d wpm_db -c '\d usuario'
+docker compose exec -T postgres psql -U "$(cat secrets/db_user.txt)" -d wpm_db -c 'select * from usuario;'
+docker compose exec -T postgres psql -U "$(cat secrets/db_user.txt)" -d wpm_db -c 'select count(*) from usuario;'
+
+# desde fuera, usando el puerto publicado 5432 (la contraseña se lee del fichero, no se imprime)
+PGPASSWORD="$(cat secrets/db_password.txt)" psql -h localhost -p 5432 -U "$(cat secrets/db_user.txt)" -d wpm_db
+```
+
+Dentro de `psql`: `\dt` lista tablas, `\d usuario` describe la tabla, `\q` sale.
+
+Estructura actual de la tabla (`db/init/01-schema.sql`):
+
+```sql
+CREATE TABLE IF NOT EXISTS usuario (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL
 );
-CREATE TABLE
-escuela=# \dt
-        List of relations
- Schema |  Name   | Type  | Owner
---------+---------+-------+-------
- public | usuario | table | admin
-(1 row)
+```
 
-escuela=# INSERT INTO usuario (nombre, email) VALUES
-escuela-#     ('Juan Pérez', 'juan@example.com'),
-escuela-#     ('María Gómez', 'maria@example.com'),
-escuela-#     ('Carlos Ruiz', 'carlos@example.com'),
-escuela-#     ('Ana López', 'ana@example.com'),
-escuela-#     ('Luis Fernández', 'luis@example.com');
-INSERT 0 5
-escuela=# select * from usuarios;
-ERROR:  relation "usuarios" does not exist
-LINE 1: select * from usuarios;
-                      ^
-escuela=# select * from usuario;
- id |     nombre     |       email
-----+----------------+--------------------
-  1 | Juan Pérez     | juan@example.com
-  2 | María Gómez    | maria@example.com
-  3 | Carlos Ruiz    | carlos@example.com
-  4 | Ana López      | ana@example.com
-  5 | Luis Fernández | luis@example.com
+Recrear la base desde cero (⚠ pierde los datos):
 
+```bash
+docker compose down -v && docker compose up -d
+```
 
-  curl
+## API con curl (puerto 4001)
 
-  mgl@mgl-HP-lap:~/26Aprogweb/ts/_06_practica-microservicio-bun_Hexa_UserApi_ok$ curl -X POST http://localhost:3000/usuarios \
+```bash
+curl -s localhost:4001/health
+curl -s localhost:4001/usuarios
+curl -s localhost:4001/usuarios/31
+curl -si localhost:4001/usuarios          # -i: incluir cabeceras de respuesta
+
+curl -s -X POST localhost:4001/usuarios \
   -H "Content-Type: application/json" \
-  -d '{
-    "nombre": "Juan Pérez",
-    "email": "juan@example.com"
-  }'
-{
-  "id": 6,
-  "nombre": "{\"nombre\":\"Juan Pérez\",\"email\":\"juan@example.com\"}",
-  "email": "{}"
-mgl@mgl-HP-lap:~/26Aprogweb/ts/_06_practica-microservicio-bun_Hexa_UserApi_ok$ curl -v http://localhost:3000/usuarioss
-* Host localhost:3000 was resolved.
-* IPv6: ::1
-* IPv4: 127.0.0.1
-*   Trying [::1]:3000...
-* Connected to localhost (::1) port 3000
-> GET /usuarios HTTP/1.1
-> Host: localhost:3000
-> User-Agent: curl/8.5.0
-> Accept: */*
->
-< HTTP/1.1 200 OK
-< Content-Type: application/json
-< Date: Thu, 21 May 2026 03:53:46 GMT
-< Content-Length: 541
-<
-[
-  {
-    "id": 1,
-    "nombre": "Juan Pérez",
-    "email": "juan@example.com"
-  },
-  {
-    "id": 2,
-    "nombre": "María Gómez",
-    "email": "maria@example.com"
-  },
-  {
-    "id": 3,
-    "nombre": "Carlos Ruiz",
-    "email": "carlos@example.com"
-  },
-  {
-    "id": 4,
-    "nombre": "Ana López",
-    "email": "ana@example.com"
-  },
-  {
-    "id": 5,
-    "nombre": "Luis Fernández",
-    "email": "luis@example.com"
-  },
-  {
-    "id": 6,
-    "nombre": "{\"nombre\":\"Juan Pérez\",\"email\":\"juan@example.com\"}",
-    "email": "{}"
-  }
-* Connection #0 to host localhost left intact
+  -d '{"nombre":"Juan Pérez","email":"juan@example.com"}'
 
-update usuario-----------------------------------------------
-mgl@mgl-HP-lap:~/26Aprogweb/ts/_06_practica-microservicio-bun_Hexa_UserApi_ok$ curl -X PUT http://localhost:3000/usuarios/1   -H "Content-Type: application/json"   -d '{
-    "nombre": "Juan Pérez Actualizado",
-    "email": "juan.actualizado@example.com"
-  }'
-{
-  "id": 1,
-  "nombre": "Juan Pérez Actualizado",
-  "email": "juan.actualizado@example.com"}
+curl -s -X PUT localhost:4001/usuarios/31 \
+  -H "Content-Type: application/json" \
+  -d '{"nombre":"Juan Pérez Actualizado","email":"juan.actualizado@example.com"}'
 
-  Delete usuario
+curl -s -X DELETE localhost:4001/usuarios/31
 
-  mgl@mgl-HP-lap:~/26Aprogweb/ts/_06_practica-microservicio-bun_Hexa_UserApi_ok$ curl -X DELETE http://localhost:3000/usuarios/7
-{
-  "message": "Usuario eliminado",
-  "usuario": {
-    "id": 7,
-    "nombre": "Juan Pérez",
-    "email": "juan@perez.com"
-  }
-}
+# solo el código de estado
+curl -s -o /dev/null -w '%{http_code}\n' localhost:4001/ruta-inexistente
+```
+
+Respuestas observadas (stack levantado hoy):
+
+```console
+$ curl -s localhost:4001/health
+{ "status": "ok" }                                  # http 200
+
+$ curl -s localhost:4001/usuarios
+[ { "id": 31, "nombre": "Prueba", "email": "prueba@test.com" } ]   # http 200
+
+$ curl -s -o /dev/null -w '%{http_code}\n' localhost:4001/ruta-inexistente
+404
+```
+
+Códigos esperados en el resto de rutas:
+
+| Petición | Resultado |
+| --- | --- |
+| `POST /usuarios` válido | `201` + usuario creado |
+| `POST /usuarios` email repetido | `409` |
+| `POST`/`PUT` con campos ausentes o tipos inválidos | `400` |
+| `GET`/`PUT`/`DELETE` de un id inexistente | `404` |
+| `PUT` válido | `200` + usuario actualizado |
+| `DELETE` válido | `200` + `{ "message": "Usuario eliminado", "usuario": { … } }` |
+| Cualquier método en `/health` que no sea `GET` | `405` |
+
+## Inspección y diagnóstico
+
+```bash
+# ¿los secretos se montan como ficheros y no como variables?
+docker inspect 01_rsc_wpm_bun_psgres-backend --format '{{json .Mounts}}'
+docker inspect 01_rsc_wpm_backend-postgres --format '{{json .Config.Env}}'
+docker compose config                    # debe mostrar rutas /run/secrets/, nunca valores
+
+# variables que ve la API
+docker compose exec -T backend sh -c 'printenv | grep -E "^DB_"'
+
+# ¿la imagen contiene solo el build?
+docker compose exec -T backend sh -c 'ls /app'          # dist  node_modules
+
+# ¿el contenedor sirve el código nuevo? (la imagen hornea src/ -> dist/)
+docker compose exec -T backend sh -c 'grep -c handleHealth /app/dist/index.js'   # 2
+
+# salud del motor y de la base
+docker info --format '{{.ServerVersion}}'
+docker compose exec postgres pg_isready -U "$(cat secrets/db_user.txt)" -d wpm_db
+```
+
+## Red y volúmenes
+
+```bash
+docker network ls
+docker network inspect 01_rsc_wpm_backend_rsc-network
+docker volume ls
+docker volume inspect 01_rsc_wpm_backend_postgres_data
+
+# ¿se ven entre contenedores? (desde el backend hacia la base)
+docker compose exec -T backend sh -c 'getent hosts postgres'
+```
+
+## Local, sin contenedores
+
+```bash
+bun install
+bun test                                # suite completa de test/
+bun test test/health.test.ts            # un solo fichero
+bunx tsc --noEmit                       # se espera salida vacía (0 errores)
+bun run src/index.ts                    # requiere Postgres en localhost:5432 y el puerto 4001 libre
+```
+
+## Notas y trampas conocidas
+
+- **La tabla es `usuario`, en singular.** `select * from usuarios;` falla con
+  `ERROR: relation "usuarios" does not exist`.
+- **La imagen hornea el código.** `Dockerfile` construye `dist/index.js` a partir de `src/`
+  y solo los secretos se montan desde el host; por eso un cambio en el código **no** se
+  sirve hasta reconstruir (`docker compose build --no-cache backend && docker compose up -d
+  --force-recreate backend`). La comprobación de que el cambio llegó es un `grep` sobre
+  `/app/dist/index.js`, no sobre `src/`.
+- **`db/init/01-schema.sql` se ejecuta una sola vez**, cuando el volumen está vacío. Para
+  volver a aplicarlo hay que borrar el volumen (`down -v`), y eso destruye los datos.
+- **`docker` sin `sudo`**: el usuario del host está en el grupo `docker`. Si en tu máquina
+  no lo está, antepón `sudo` a los comandos de Docker.
+- **El puerto 3000 es histórico**: la API escucha en `4001` y la base publica `5432`.
+
+## Lo que cambió respecto a la versión anterior de este documento
+
+| Antes | Ahora |
+| --- | --- |
+| `http://localhost:3000` | `http://localhost:4001` |
+| Base de datos `escuela` | `wpm_db` |
+| Usuario y contraseña escritos en los comandos | `$(cat secrets/db_user.txt)` / `$(cat secrets/db_password.txt)` |
+| Contenedor `06_practica-microservicio-bun_hexa_userapi_ok-postgres-1` | `01_rsc_wpm_backend-postgres` y `01_rsc_wpm_bun_psgres-backend` |
+| `sudo docker …` | `docker …` |
+| IP del contenedor vía `docker inspect` para conectarse | nombre de servicio `postgres` dentro de la red del proyecto |
+| Transcripciones con la respuesta duplicada del `POST` (bug antiguo ya corregido) | Respuestas reales del stack actual |
