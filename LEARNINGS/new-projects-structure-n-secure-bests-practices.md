@@ -253,6 +253,73 @@ _01_rsc_wpm_backend/
 
 ---
 
+## 10. Secret file permissions — the incident that produced a 503 (2026-10-07)
+
+This section records a real incident from the `feat/rotate-db-secrets` session. It is the most
+transferable lesson in this file: **Compose `secrets:` file mounts are bind mounts, and Docker does
+NOT remap uid/gid on them.** The container user must be able to read the file with its own identity.
+
+### Symptom
+- Backend `/health` returned **HTTP 503** with `{"status":"unavailable"}` right after a secret rotation.
+- PostgreSQL never saw a valid password; the backend logged
+  `SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string`.
+- The password itself was correct and consistent between `.env` and the secret file.
+
+### Root cause (a chain, not a single bug)
+1. The Compose secret is mounted read-only at `/run/secrets/db_password`.
+2. The backend image runs as a non-root user — **uid 100 (`bunuser`)**.
+3. The host file was owned `1000:1000` with mode `600`.
+4. Bind mounts keep the host uid/gid/mode — unlike `docker secret`, there is no uid/gid remapping.
+5. `readSecretFile(path, fallback)` in `postgres.ts` swallowed the `EACCES` and returned the fallback `""`.
+6. An empty string reached the driver, which rejected it with the SASL error above, and `/health` returned 503.
+
+So a **permission** problem masqueraded as a **password/auth** problem. The stored password never changed.
+
+### Fix
+- Secret files: mode **`0644`** (`secrets/*.txt`), directory `0700`, and gitignored.
+- Do not rely on `600`: the uid inside the container rarely matches the host owner.
+
+### Diagnose it fast
+```bash
+docker compose -f _01_rsc_wpm_backend/docker-compose.yml exec -T backend ls -l /run/secrets/
+docker compose -f _01_rsc_wpm_backend/docker-compose.yml exec -T backend id
+docker inspect <backend> --format '{{json .Mounts}}' | jq
+```
+If the file is not world-readable and the container user is not its owner, that is the bug.
+
+### Transferable rule
+- `docker secret` (Swarm) remaps ownership. **Compose `secrets:` file mounts do not.** Treat them as
+  plain bind mounts and set permissions for the *container* user, not the *host* user.
+- When a secret consumer fails, check the **readability** of the mounted file before theorizing about
+  the credential value.
+
+---
+
+## 11. Non-destructive database password rotation
+
+Rotating a password in a Compose/dev stack has a trap: **restarting or recreating the Postgres
+container does not re-run initialization on an existing volume** (see
+[`postgresql-learnings.md`](./postgresql-learnings.md) §3). The role password lives in `pg_authid`,
+written only when the data directory is first initialized.
+
+Correct, non-destructive procedure:
+1. Update the secret source (`.env` and/or `secrets/db_password.txt`).
+2. Change the password **in the running database**:
+   `docker exec ... psql -U <admin> -d <db> -c "ALTER USER <user> WITH PASSWORD '...';"`.
+3. Recreate only the **backend** so it picks up the new secret. Compose secrets are runtime mounts —
+   no image rebuild is needed.
+4. Verify with `/health` and a DB health check before declaring success.
+
+Do **not** `docker compose down -v` to "apply" a new password: that deletes the volume and its data.
+
+### Fail-closed guardrail (design rule)
+The rotation tool (`project-tools/rotate-db-secrets.sh`) refuses to rotate unless its preconditions
+hold: it reports the situation it found, states that no rotation was performed, and exits non-zero
+**without mutating anything**. Verified end-to-end with the stack stopped (exit 1, secret file mtime
+unchanged). Prefer a tool that **stops and explains** over one that half-applies a change.
+
+---
+
 ## Key files to reference
 
 - `docker-compose.yml` — secure compose (`env_file`, `env_file` variables)
