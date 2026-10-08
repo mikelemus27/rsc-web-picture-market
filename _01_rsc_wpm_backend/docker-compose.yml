@@ -4,6 +4,9 @@ services:
   # The database is published on the host for local tools and keeps its data
   # in a named volume so ordinary container recreation does not erase it.
   postgres:
+    # Fixed name for predictable references in docs and CLI commands; Compose
+    # would otherwise auto-name it "<project>-postgres-1".
+    container_name: 01_rsc_wpm_backend-postgres
     image: postgres:16-alpine
     restart: always
     environment:

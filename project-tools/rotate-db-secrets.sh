@@ -6,8 +6,13 @@
 # One generator, manual by design. No cron, no timers: rotation happens only when
 # a human decides it is really needed.
 #
-# Secret values are read from files inside this script and written to files with
-# mode 600; they are never printed to stdout.
+# Secret values are read from files inside this script and never printed to
+# stdout. Secret files are written with mode 0644: Compose `file:` secrets are
+# bind mounts with no uid/gid remapping, so the container user (uid 100
+# "bunuser") reads the host file directly. Owner-only 0600 makes the file
+# unreadable inside the container, the backend silently falls back to an empty
+# password, and /health turns 503. The secrets directory stays 0700 and the
+# files are gitignored.
 #
 # Rotation is fail-closed: if the live-stack conditions are not met, NO rotation
 # is performed, the situation is reported, and the caller is told to review.
@@ -24,6 +29,10 @@ DB_USER_FILE="$SECRETS_DIR/db_user.txt"
 DB_PASSWORD_FILE="$SECRETS_DIR/db_password.txt"
 COMPOSE_FILE="${COMPOSE_FILE:-$REPO_ROOT/_01_rsc_wpm_backend/docker-compose.yml}"
 ENV_FILE="$REPO_ROOT/.env"
+
+# Mode for the secret FILES. Must let the Compose container user (uid 100) read
+# them; see the header note on why 0600 breaks the stack.
+SECRET_FILE_MODE="${SECRET_FILE_MODE:-644}"
 
 DB_SERVICE="${DB_SERVICE:-postgres}"
 BACKEND_SERVICE="${BACKEND_SERVICE:-backend}"
@@ -60,7 +69,8 @@ Usage: $0 {init|rotate|status} [--check] [--force] [--no-color]
 Tools:
   init
       Create secrets/db_user.txt (default "admin") and secrets/db_password.txt
-      with a fresh random password (openssl rand -base64 32), mode 600, and
+      with a fresh random password (openssl rand -base64 32), mode $SECRET_FILE_MODE
+      (readable by the Compose container user), and
       regenerate the derived root .env. Refuses to overwrite an existing
       password unless --force is given. No Docker required; intended for fresh
       clones and first-time setup.
@@ -135,10 +145,20 @@ ensure_secret_dir() {
 }
 
 write_secret() { # $1 file $2 value
-  umask 077
+  # 0644, not 0600: the Compose container user (uid 100) must read the bind-mounted
+  # file. Write atomically, then expose the final mode on the destination.
   printf '%s' "$2" > "$1.tmp"
+  chmod "$SECRET_FILE_MODE" "$1.tmp"
   mv "$1.tmp" "$1"
-  chmod 600 "$1"
+}
+
+# Re-assert the readable mode on existing secret files (e.g. after a manual
+# chmod 600 or a clone that shipped restrictive permissions).
+ensure_secret_modes() {
+  local f
+  for f in "$DB_USER_FILE" "$DB_PASSWORD_FILE"; do
+    [ -f "$f" ] && chmod "$SECRET_FILE_MODE" "$f" 2>/dev/null || true
+  done
 }
 
 # root .env is DERIVED from the secrets files; never edit it by hand.
@@ -160,6 +180,24 @@ DB_PORT=$DB_PORT
 EOF
   mv "$ENV_FILE.tmp" "$ENV_FILE"
   chmod 600 "$ENV_FILE"
+}
+
+# Poll $HEALTH_URL until it returns 200, up to $1 seconds. Container recreation
+# is not instantaneous, so a single immediate curl reports false negatives.
+HEALTH_LAST_CODE=""
+wait_for_health() { # $1 timeout seconds
+  local deadline=$((SECONDS + ${1:-30})) code
+  while :; do
+    code="$(curl -s -o /dev/null -w '%{http_code}' "$HEALTH_URL" || true)"
+    if [ "$code" = "200" ]; then
+      return 0
+    fi
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      HEALTH_LAST_CODE="$code"
+      return 1
+    fi
+    sleep 2
+  done
 }
 
 # ---------------------------------------------------------------------------
@@ -258,15 +296,18 @@ cmd_init() {
   else
     password="$(random_password)"
     write_secret "$DB_PASSWORD_FILE" "$password"
-    echo "Created/rotated $DB_PASSWORD_FILE ($(printf '%s' "$password" | wc -c) bytes, mode 600)."
+    echo "Created/rotated $DB_PASSWORD_FILE ($(printf '%s' "$password" | wc -c) bytes, mode $SECRET_FILE_MODE)."
   fi
 
+  ensure_secret_modes
   write_env_file "$user" "$password"
   echo "Regenerated $ENV_FILE (mode 600, derived from secrets)."
 
   echo ""
   echo "Next: start the stack with ./project-tools/container-management.sh start-all"
-  echo "A fresh postgres volume reads these files on first start."
+  echo "  'init' only writes these files; it does not change a live database."
+  echo "  A brand-new (empty) postgres volume reads them on first start."
+  echo "  To change the password on an existing database, run: $0 rotate"
 }
 
 cmd_rotate_check() {
@@ -299,6 +340,7 @@ cmd_rotate() {
   write_secret "$DB_PASSWORD_FILE" "$password"
   write_env_file "$user" "$password"
   echo "1/5 wrote new $DB_PASSWORD_FILE ($(printf '%s' "$password" | wc -c) bytes) and regenerated $ENV_FILE"
+  ensure_secret_modes
 
   # 2) Apply to the live database. Socket trust makes ALTER USER work even
   #    though the old password is unknown to this script.
@@ -319,16 +361,15 @@ cmd_rotate() {
   echo "3/5 recreating backend container to re-read the secret..."
   compose up -d --force-recreate "$BACKEND_SERVICE" >/dev/null
 
-  # 4) Verify.
-  echo "4/5 verifying $HEALTH_URL..."
-  local code
-  code="$(curl -s -o /dev/null -w '%{http_code}' "$HEALTH_URL" || true)"
-  if [ "$code" = "200" ]; then
-    echo -e "${GREEN}5/5 rotation complete — /health returns 200.${NC}"
+  # 4) Verify. Recreating a container is not instantaneous, so wait for the
+  #    backend to answer instead of failing on a single immediate curl.
+  echo "4/5 verifying $HEALTH_URL (waiting for the recreated backend)..."
+  if wait_for_health 30; then
+    echo -e "${GREEN}5/5 rotation complete — $HEALTH_URL returns HTTP 200.${NC}"
     echo "Local tools (db-healthcheck.sh) pick up the new password from the regenerated .env / secret file."
   else
     echo ""
-    echo -e "${RED}VERIFICATION FAILED: /health returned ${code:-no response}.${NC}"
+    echo -e "${RED}VERIFICATION FAILED: $HEALTH_URL last returned ${HEALTH_LAST_CODE:-000}.${NC}"
     echo "Rotation was applied but the stack did not come back healthy."
     echo "Review container logs: docker compose -f $COMPOSE_FILE logs $BACKEND_SERVICE"
     return 1
