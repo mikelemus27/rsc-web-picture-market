@@ -17,8 +17,10 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Configuration. Every value can be overridden from the environment so CI does
 # not have to edit this file. The defaults mirror docker-compose.yml.
 # ---------------------------------------------------------------------------
-DB_USER="${DB_USER:-admin}"
-DB_PASS="${DB_PASS:-admin123}"
+# No plaintext credential defaults: DB_PASS is resolved at preflight from the
+# environment or from the backend secrets files (single source of truth).
+DB_USER="${DB_USER:-}"
+DB_PASS=""
 DB_NAME="${DB_NAME:-wpm_db}"
 DB_SERVICE="${DB_SERVICE:-postgres}"
 DB_SCHEMA="${DB_SCHEMA:-public}"
@@ -71,7 +73,11 @@ Checks available to --check:
 Modes are mutually exclusive: --check, -q and --file cannot be combined.
 
 Environment overrides:
-  DB_USER DB_PASS DB_NAME DB_SERVICE DB_SCHEMA DB_TABLE COMPOSE_FILE TIMEOUT_SECS
+  DB_USER DB_PASS PGPASSWORD DB_NAME DB_SERVICE DB_SCHEMA DB_TABLE COMPOSE_FILE TIMEOUT_SECS
+
+  When DB_USER/DB_PASS are unset, values are read from the backend secrets files
+  (_01_rsc_wpm_backend/secrets/db_user.txt and db_password.txt) and fail fast if
+  neither the environment nor the files provide a password.
 
 Examples:
   $0
@@ -121,7 +127,35 @@ preflight() {
   [ -f "$COMPOSE_FILE" ] || fail "Compose file not found: $COMPOSE_FILE
   Set COMPOSE_FILE to override."
 
+  resolve_credentials
+
   export PGPASSWORD="$DB_PASS"
+}
+
+# Resolve DB_USER/DB_PASS without embedding secrets in this file. Precedence:
+# explicit env (DB_USER / DB_PASS, then PGPASSWORD), then the backend secrets
+# files (db_user.txt / db_password.txt), then nothing -> fail fast with an
+# actionable message. Never a hardcoded fallback.
+resolve_credentials() {
+  if [ -n "$DB_USER" ]; then
+    : # explicit
+  elif [ -r "$REPO_ROOT/_01_rsc_wpm_backend/secrets/db_user.txt" ]; then
+    DB_USER="$(tr -d '\r\n' < "$REPO_ROOT/_01_rsc_wpm_backend/secrets/db_user.txt")"
+  else
+    DB_USER="admin"
+  fi
+
+  if [ -n "$DB_PASS" ]; then
+    : # explicit
+  elif [ -n "${PGPASSWORD:-}" ]; then
+    DB_PASS="$PGPASSWORD"
+  elif [ -r "$REPO_ROOT/_01_rsc_wpm_backend/secrets/db_password.txt" ]; then
+    DB_PASS="$(tr -d '\r\n' < "$REPO_ROOT/_01_rsc_wpm_backend/secrets/db_password.txt")"
+  else
+    fail "No database password found. Set DB_PASS or PGPASSWORD, or create
+  $REPO_ROOT/_01_rsc_wpm_backend/secrets/db_password.txt first
+  (run ./project-tools/rotate-db-secrets.sh init to generate it)."
+  fi
 }
 
 # Run a command under a timeout when the timeout binary exists, so an

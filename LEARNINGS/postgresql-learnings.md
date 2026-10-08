@@ -93,6 +93,30 @@ Observed results:
 - Frontend-container API suite: 11 passed, 0 failed (28 assertions).
 - Backend image rebuilt without deleting or recreating the PostgreSQL container or named volume.
 
+## 9. Password rotation on an existing volume (2026-10-07)
+
+- Restarting or recreating the Postgres container does **not** re-run `/docker-entrypoint-initdb.d/`
+  and does **not** change the role password on a volume that already contains data. The password lives
+  in `pg_authid`, written only at first initialization (see §3).
+- To rotate non-destructively: run `ALTER USER <user> WITH PASSWORD '...'` against the running
+  database (`docker compose exec -T postgres psql -U <admin> -d <db> -c "..."`), then update the secret
+  source and recreate the **client** (backend), not the database.
+- Do not `docker compose down -v` to apply a new password — it deletes the volume and its data.
+
+### 9.1 `SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string` is not only a wrong password
+
+This error appears when the driver receives an **empty/undefined** password (e.g. `""`), not only when
+the password is wrong. In a real incident it was caused by the backend being unable to **read** the
+secret file (bind-mount permissions) and falling back to `""`. Before resetting credentials, confirm
+the client actually read a non-empty secret. See
+[`new-projects-structure-n-secure-bests-practices.md`](./new-projects-structure-n-secure-bests-practices.md) §10.
+
+### Update to §8
+On 2026-10-07 the `503` branch of `/health` was exercised by a **real incident** (unreadable secret
+file → empty password): it returned 503 as designed, and returned 200 again after the permissions were
+fixed. This is fault-injection-by-accident, not a planned test — record it as real evidence that the
+unavailable branch works.
+
 ## Related learning
 
 - [Docker microservices and container learnings](./docker-microservices-containers-learnings.md) — networking, Compose test invocation, and the recorded missing-schema incident.

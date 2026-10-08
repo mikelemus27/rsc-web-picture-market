@@ -605,3 +605,37 @@ When a CI script (`validate-labels.sh`) is the gate, you cannot trust "it passes
 Practical note: `fail()` writes `  ✗ %s` to stderr, `pass()` writes `  ✓ %s` to stdout — `run_validator` must capture `2>&1` so both appear in `RUN_OUTPUT`.
 
 Repository example: `.github/scripts/test-validate-labels.sh` (717 lines) proves 7 faults for `validate-labels.sh`. It caught its own false-positive (whole-output reason match) via test (B).
+
+---
+
+# Secrets rotation PR workflow (2026-10-07)
+
+Added from PR #23 (`feat/rotate-db-secrets`).
+
+### 31. Keep branches; merge is a human decision
+
+- Working agreement for this repo: **preserve all branches**; never auto-delete or auto-merge on the
+  user's behalf. Do not use tools that append `--delete-branch` (see §27) unless explicitly asked.
+- The base for every PR is `dev`, not `main` (see §15) — `Refs #` there does not auto-close issues.
+
+### 32. `CLEAN` + empty checks still means "nothing blocking", not "tested"
+
+PR #23 reported `mergeStateStatus: CLEAN` with an **empty** `statusCheckRollup`, because no build/test
+CI runs on its paths. Same lesson as §19: there is no CI proving the suite. The local/container suites
+(backend 16/16, frontend 11/11) are the evidence and must be run and reported explicitly.
+
+### 33. Persist discovered follow-up in `TODO.md`, then commit it
+
+New defects found while shipping a feature go to the tracked root [`TODO.md`](../TODO.md), each with
+observable "Done when" criteria (see also "Persist follow-up work across agents and sessions" above).
+Committing a TODO-only docs change onto the same feature branch keeps the backlog with the PR; it is a
+docs commit (`docs(todo): ...`), separate from the code commits.
+
+### 34. Commit hygiene applied here
+
+- One atomic commit per concern, e.g. `refactor(tools): remove hardcoded DB credentials from
+  db-healthcheck.sh`, `fix(secrets): make secret files readable by the container user`,
+  `docs(todo): track container-management start-all fallback and frontend network defects`.
+- No `Co-Authored-By` or AI attribution trailers (§16).
+- Confirm the pushed range from the push output (here `46a9ace..926ec35`, then `926ec35..ba7f167`) and
+  verify the PR picked it up with `gh pr view <n> --json commits`.

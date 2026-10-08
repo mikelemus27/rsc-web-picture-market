@@ -236,7 +236,56 @@ Older `4 pass` results and the earlier test command in sections 2 and 4 describe
 
 ---
 
-## 7. Referencias
+## 7. Incidents and lessons from the 2026-10-07 secrets session
+
+Verified while shipping `feat/rotate-db-secrets`. Current suite counts are unchanged from section 6
+(backend local 16/16, backend-container 16 = 5 unit + 11 API, frontend-container 11/11); the rotation
+tool adds `rotate --check` 6/6 and `db-healthcheck.sh` 8/8.
+
+### 7.1 Container user vs secret file permissions (the 503 incident)
+The backend runs as **uid 100 (`bunuser`)**. Compose `secrets:` are read-only **bind mounts** with no
+uid/gid remapping, so a host secret file owned `1000:1000 mode 600` is unreadable inside the
+container. The reader fell back to `""`, the driver rejected it
+(`SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string`), and `/health` returned 503.
+Fix: secret files mode **`0644`** (dir `0700`, gitignored). Full write-up in
+[`new-projects-structure-n-secure-bests-practices.md`](./new-projects-structure-n-secure-bests-practices.md) §10.
+
+### 7.2 The frontend container is a one-shot job, not a daemon
+Its `CMD` is `["bun","test","./tests/usuarios.frontend.api.test.ts"]`: it runs the suite and **exits 0
+by design** (11/11 in the current run). Consequences:
+- `docker compose up -d frontend` can show the container leaving `Up`; that is expected, not a crash.
+- A "start-all" health check must not assert the frontend stays running — assert the test exited 0.
+- Do not add a restart policy expecting a long-lived process.
+
+### 7.3 A stale container can be bound to a network ID that no longer exists
+When the backend network is recreated it gets a **new ID**. A frontend container left from an earlier
+run can still reference the old ID, and starting it fails with
+`failed to set up container networking: network ... not found`. Recreate it with `--force-recreate`
+(or remove the stale container first).
+
+### 7.4 `container_name` pinning vs Compose v2 auto-naming
+Compose v2 auto-names containers `<proyecto>-<servicio>-<réplica>` (e.g. the Postgres service became
+`...-postgres-1`). Pinning `container_name:` stabilizes the human-facing name; the Postgres service was
+pinned to `01_rsc_wpm_backend-postgres` and recreated without touching the data volume. Note that
+lookups by **service** (`docker compose ps -q postgres`) are already immune to auto-naming — prefer
+those in scripts over hardcoded container names.
+
+### 7.5 A pipeline masks the exit status of the command before the pipe
+`container-management.sh` `start-all` used
+`docker compose ... up -d --no-deps frontend ... | tail -2 || { fallback }`.
+The `||` **never fires**: without `set -o pipefail` (POSIX `sh`), the pipeline status is `tail`'s, not
+`docker compose`'s, so a failing start is silently swallowed. Its fallback also joined `rsc-shared`
+while the compose service uses `01_rsc_wpm_backend_rsc-network` (inconsistent). Tracked in
+[`TODO.md`](../TODO.md). Fix by capturing the status (`if ! cmd; then ...`) or enabling `pipefail`.
+
+### 7.6 Compose secrets are runtime mounts — no rebuild needed
+Changing a secret's contents (or its file) requires recreating the **consumer** container, not
+rebuilding its image. The secret is not baked into the image and not visible in `docker inspect`
+(only the file path is). See §8 of the secure best-practices file for the mechanism table.
+
+---
+
+## 8. Referencias
 
 - `local://docker-compose-dev-vs-prod-plan.md` (plan aprobado, idéntico contenido).
 - `local://paste-1.md` (tutorial original — cubre `ConnectionRefused`, `docker compose run`, `.env`/red). Las secciones anteriores preservan resultados históricos; la sección 6 registra el flujo actual verificado.
