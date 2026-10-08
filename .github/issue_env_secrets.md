@@ -1,7 +1,7 @@
 # ENV Variables with secrets and database name committed to public repo
 
 ## Problem
-- `docker-compose.yml` commits `POSTGRES_PASSWORD: admin123`, `DB_PASSWORD: admin123`, `POSTGRES_DB: wpm_db`, `DB_NAME: wpm_db`
+- `docker-compose.yml` commits `POSTGRES_PASSWORD: <rotated>`, `DB_PASSWORD: <rotated>`, `POSTGRES_DB: wpm_db`, `DB_NAME: wpm_db`
 - Repo `mikelemus27/rsc-web-picture-market` is public
 - Secrets (passwords) and DB identifier exposed in Git history
 
