@@ -4,7 +4,10 @@
 # Runtime artifacts (not project files)
 .rsc/ .rsc-state.json .rsc/*.mjs .rsc/*.json
 .docker-compose-fix.md .docker-fix.md
-.env .env.local .env.production
+# Local environment files — never commit secrets (one pattern per line)
+.env
+.env.local
+.env.production
 # GitHub harness artifacts that should not commit to repo root
 .github/agents/ .github/prompts/ .github/rsc/ .github/copilot-instructions.md
 

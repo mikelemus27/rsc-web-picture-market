@@ -227,9 +227,9 @@ _01_rsc_wpm_backend/
 - Requires a few lines of code change in the application
 
 **Credential rotation is mandatory:**
-- The `admin123` password has been committed to Git history
+- The `<rotated>` password has been committed to Git history
 - Generate a new strong password, put it in `secrets/db_password.txt`
-- The old `admin123` in Git history should be considered compromised
+- The old `<rotated>` in Git history should be considered compromised
 - If the repo is ever shared or pushed to a remote, history should be rewritten (separate, careful operation)
 
 ### Key lessons learned

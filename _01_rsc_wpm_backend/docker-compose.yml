@@ -7,10 +7,11 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_USER: admin
-      # These development credentials are inline; replace them with ignored
-      # environment configuration or secrets before sharing or deploying.
-      POSTGRES_PASSWORD: admin123
+      # Credentials come from Compose secrets mounted as read-only files at
+      # /run/secrets/. PostgreSQL reads them via its native *_FILE variables,
+      # so no plaintext credential ever appears in env, inspect, or config.
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
       POSTGRES_DB: wpm_db
     ports:
       # Host port 5432 forwards to PostgreSQL's standard port inside the container.
@@ -29,6 +30,9 @@ services:
       start_period: 5s
     networks:
       - rsc-network
+    secrets:
+      - db_user
+      - db_password
 
   # Build and run the API. It reaches PostgreSQL by the service name "postgres",
   # using the database's internal port rather than its host-published port.
@@ -41,9 +45,10 @@ services:
       - "4001:4001"
     environment:
       DB_HOST: postgres
-      DB_USER: admin
-      # Use development credentials here; keep production credentials external.
-      DB_PASSWORD: admin123
+      # The app reads these credential files (see postgres.ts) instead of
+      # receiving passwords as environment variables.
+      DB_USER_FILE: /run/secrets/db_user
+      DB_PASSWORD_FILE: /run/secrets/db_password
       DB_NAME: wpm_db
       DB_PORT: 5432
     depends_on:
@@ -53,7 +58,18 @@ services:
         condition: service_healthy
     networks:
       - rsc-network
+    secrets:
+      - db_user
+      - db_password
 
+
+# Compose secrets are mounted read-only at /run/secrets/ inside containers.
+# Only the file path is visible to inspect, ps e, and compose config.
+secrets:
+  db_user:
+    file: ./secrets/db_user.txt
+  db_password:
+    file: ./secrets/db_password.txt
 
 # Named volumes outlive container recreation and preserve the database contents.
 volumes:

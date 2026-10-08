@@ -22,7 +22,7 @@ this plan. If any of them stop holding, update this section first.
 | Compose file | `_01_rsc_wpm_backend/docker-compose.yml` | **There is no compose file at the repo root** |
 | Compose service name | `postgres` | `docker-compose.yml` services |
 | Resolved container name | `01_rsc_wpm_backend-postgres-1` | `docker ps` |
-| Database / user / password | `wpm_db` / `admin` / `admin123` | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` |
+| Database / user / password | `wpm_db` / `admin` / `<rotated>` | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` |
 | Postgres image | `postgres:16-alpine` | `docker-compose.yml` |
 | Schema source | `_01_rsc_wpm_backend/db/init/01-schema.sql` | Mounted at `/docker-entrypoint-initdb.d/01-schema.sql` |
 | Actual table shape | `id SERIAL PK`, `nombre VARCHAR(100) NOT NULL`, `email VARCHAR(100) UNIQUE NOT NULL` | Read the schema file |
@@ -136,7 +136,7 @@ but can be overridden without editing it.
 | Variable | Default | Purpose |
 |---|---|---|
 | `DB_USER` | `admin` | Postgres role |
-| `DB_PASS` | `admin123` | Password (used only if the role needs it) |
+| `DB_PASS` | `<rotated>` | Password (used only if the role needs it) |
 | `DB_NAME` | `wpm_db` | Database |
 | `DB_SERVICE` | `postgres` | Compose service name |
 | `DB_SCHEMA` | `public` | Schema holding the table |

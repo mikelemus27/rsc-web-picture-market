@@ -80,15 +80,38 @@ The global `stop-running-containers` action interrupts processes in all running 
 
 ## Configuration and security
 
-Review the backend and frontend Compose files before running this project in a shared or production environment. The backend Compose configuration currently contains database credentials directly in the file. Replace development credentials with local, ignored environment configuration or a secrets manager before exposing the services; rotate any credential that has been shared or committed.
+Database credentials are not stored inline in the Compose files. The backend Compose stack loads
+them from Docker Compose **secrets** — read-only files mounted at `/run/secrets/` inside each
+container from `_01_rsc_wpm_backend/secrets/` (gitignored). Only the file paths, never the values,
+appear in `docker inspect`, `docker compose config`, or `ps e`.
 
-Do not publish local `.env` files, database credentials, or generated agent configuration. A Git history rewrite does not rotate a credential.
+To populate the secrets for a fresh checkout, create the ignored files:
+
+```bash
+mkdir -p _01_rsc_wpm_backend/secrets
+printf 'admin' > _01_rsc_wpm_backend/secrets/db_user.txt
+openssl rand -base64 32 > _01_rsc_wpm_backend/secrets/db_password.txt
+```
+
+The backend reads them through the `DB_USER_FILE` / `DB_PASSWORD_FILE` variables in
+`src/infraestructura/database/postgres.ts`, falling back to plain env vars when the files are absent
+(local non-Docker development). PostgreSQL uses its native `POSTGRES_USER_FILE` /
+`POSTGRES_PASSWORD_FILE` variables.
+
+The credential previously committed inline and present in Git history must be considered
+compromised; a Git history rewrite does not rotate it. If the versioned volume predates the secrets
+switch, it keeps the old password and must be recreated for rotation to take effect.
+
+Do not publish local `.env` files, the `secrets/` directory, database credentials, or generated
+agent configuration. The root `.env` is not tracked; it only holds local non-Docker defaults, and
+the Compose stack reads credentials exclusively from the `secrets/` files.
 
 ## Repository layout
 
 ```text
 _01_rsc_wpm_backend/
 ├── db/init/                 # PostgreSQL initialization SQL for new data volumes
+├── secrets/                 # Gitignored secret files loaded by Compose (see .gitkeep)
 ├── src/                     # Backend API and application layers
 ├── test/                    # Backend API contract tests
 ├── docker-compose.yml       # Backend and PostgreSQL services

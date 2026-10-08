@@ -3,17 +3,17 @@
 ## Goal
 
 Remove inline credentials from `docker-compose.yml`, use Docker Compose native
-secrets (file mounts), rotate the exposed `admin123` credential, and keep
+secrets (file mounts), rotate the exposed `<rotated>` credential, and keep
 secrets out of Git history and `docker inspect` output.
 
 ## Current state
 
 | Item | Location | Status |
 |---|---|---|
-| `POSTGRES_PASSWORD: admin123` | `_01_rsc_wpm_backend/docker-compose.yml:13` | Inline, committed |
-| `DB_PASSWORD: admin123` | `_01_rsc_wpm_backend/docker-compose.yml:46` | Inline, committed |
+| `POSTGRES_PASSWORD: <rotated>` | `_01_rsc_wpm_backend/docker-compose.yml:13` | Inline, committed |
+| `DB_PASSWORD: <rotated>` | `_01_rsc_wpm_backend/docker-compose.yml:46` | Inline, committed |
 | `.env` in `.gitignore` | Root + backend + frontend | Already covered |
-| `admin123` in Git history | Multiple commits | Exposed, needs rotation |
+| `<rotated>` in Git history | Multiple commits | Exposed, needs rotation |
 | Backend reads password | `src/infraestructura/database/postgres.ts` | `process.env.DB_PASSWORD` |
 
 ## Approach: Docker Compose secrets with file mounts
@@ -52,7 +52,7 @@ _01_rsc_wpm_backend/
 Create `_01_rsc_wpm_backend/secrets/` with two files:
 
 - `db_user.txt` — contains `admin`
-- `db_password.txt` — contains a new strong password (not `admin123`)
+- `db_password.txt` — contains a new strong password (not `<rotated>`)
 
 Generate a strong password:
 ```bash
@@ -191,12 +191,12 @@ These files are loaded by docker-compose.yml via the secrets: block.
 
 ### Step 6: Rotate the exposed credential
 
-The `admin123` password has been committed to Git history. Steps:
+The `<rotated>` password has been committed to Git history. Steps:
 
 1. Generate a new strong password (Step 1)
 2. Put it in `secrets/db_password.txt`
 3. Start the stack with the new password — PostgreSQL will initialize with it
-4. The old `admin123` in Git history should be considered compromised
+4. The old `<rotated>` in Git history should be considered compromised
 5. If this repo is ever pushed to a remote, rewrite history with `git-filter-repo`
    (separate, careful operation — requires authorization)
 
@@ -234,11 +234,11 @@ curl http://localhost:4001/health
 
 | Before | After |
 |---|---|
-| `admin123` visible in `docker-compose.yml` | Secret in gitignored file |
-| `admin123` visible in `docker inspect` | Only file path shown |
-| `admin123` visible in `ps e` | Not shown |
-| `admin123` visible in `docker compose config` | Only file path shown |
-| `admin123` in Git history | New credential rotated |
+| `<rotated>` visible in `docker-compose.yml` | Secret in gitignored file |
+| `<rotated>` visible in `docker inspect` | Only file path shown |
+| `<rotated>` visible in `ps e` | Not shown |
+| `<rotated>` visible in `docker compose config` | Only file path shown |
+| `<rotated>` in Git history | New credential rotated |
 | No file permissions on secrets | Secrets mounted read-only |
 
 ## Files touched
