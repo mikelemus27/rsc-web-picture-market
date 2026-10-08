@@ -14,8 +14,17 @@ ENV_FILE="$REPO_ROOT/_02_rsc_wp_frontend/.env"
 # Must match the `external:` network name declared in the frontend compose file.
 # The old fallback used `rsc-shared`, a network this stack never creates.
 FRONTEND_NETWORK="01_rsc_wpm_backend_rsc-network"
+# Single definition of the frontend container's name. Compose derives it from
+# the project directory (see the compose file's `container_name:`); every place
+# that stops, removes, inspects or recreates the frontend must use this
+# variable — the literal must not appear anywhere else in this script.
+FRONTEND_CONTAINER="02_rsc_wp_bun_vue_frontend"
 
+# usage <exit-code> — prints the help text and exits with that code.
+# Defaults to 1 so existing internal callers (misuse) behave as before;
+# `help` passes 0 because a successful request must not fail.
 usage() {
+  _rc="${1:-1}"
   echo "Usage: $0 <action>"
   echo ""
   echo "Actions:"
@@ -28,21 +37,35 @@ usage() {
   echo "  test-frontend   Run frontend API integration tests inside the frontend container"
   echo "  test-backend [--container] Run backend tests locally or inside the backend container"
   echo "  help          Show this help message"
-  exit 1
+  exit "$_rc"
 }
 
+# Precondition guard for `test-frontend`: the frontend API suite talks to the
+# backend at :4001, so it is pointless to start it against a dead stack.
+#
+# The compose exit status is inspected SEPARATELY from its output so a broken
+# invocation (missing compose file, invalid flag, bad YAML) is reported as a
+# compose failure with compose's own error — never as "the container is down".
 check_backend_running() {
-  docker compose -f "$BACKEND_COMPOSE" ps --filter name=backend --format '{{.Status}}' 2>/dev/null | grep -q "Up" || {
-    printf '%b\n' "${RED}❌ Backend not running.${NC} Run '$0 start-all' first."
+  _status="$(docker compose -f "$BACKEND_COMPOSE" ps --all backend --format '{{.Status}}' 2>&1)"
+  _rc=$?
+  if [ "$_rc" -ne 0 ]; then
+    printf '%s\n' "$_status" >&2
+    printf '%b\n' "${RED}❌ docker compose failed while checking the backend (exit $_rc).${NC}" >&2
     exit 1
-  }
-}
-
-check_frontend_network() {
-  docker compose -f "$BACKEND_COMPOSE" ps --filter name=backend --format '{{.Status}}' 2>/dev/null | grep -q "Up" || {
-    printf '%b\n' "${RED}❌ Backend container not found or not running.${NC}"
+  fi
+  if [ -z "$_status" ]; then
+    printf '%b\n' "${RED}❌ No container matches service 'backend'.${NC} Run '$0 start-all' first."
     exit 1
-  }
+  fi
+  case "$_status" in
+    *Up*) ;;
+    *)
+      printf '%b\n' "${RED}❌ Backend not running.${NC} Run '$0 start-all' first."
+      exit 1
+      ;;
+  esac
+  printf '%b\n' "Status: $_status"
 }
 
 print_error() {
@@ -68,13 +91,46 @@ run_show() {
   return "$_rc"
 }
 
+# Stop one container by name without hiding real failures.
+# - `docker stop` succeeds on a running AND on an already-stopped container.
+# - "No such container" means there is nothing to stop: idempotent, silent.
+# - Any other failure (invalid name, permission denied, unreachable daemon)
+#   prints docker's own error and is reported to the caller.
+stop_named_container() {
+  _out="$(docker stop "$1" 2>&1)"
+  _rc=$?
+  if [ "$_rc" -eq 0 ]; then
+    [ -n "$_out" ] && printf '%s\n' "$_out"
+    return 0
+  fi
+  case "$_out" in
+    *"No such container"*) return 0 ;;
+  esac
+  printf '%s\n' "$_out" >&2
+  return 1
+}
+
+# Remove one container by name. `docker rm -f` already exits 0 when the
+# container does not exist, so every non-zero status is a real failure and
+# must be shown instead of being swallowed by `|| true`.
+remove_named_container() {
+  _out="$(docker rm -f "$1" 2>&1)"
+  _rc=$?
+  if [ "$_rc" -eq 0 ]; then
+    [ -n "$_out" ] && printf '%s\n' "$_out"
+    return 0
+  fi
+  printf '%s\n' "$_out" >&2
+  return 1
+}
+
 # Fallback for when `compose up` cannot create the frontend (stale container
 # attached to a deleted network, compose project not found, ...). It must use
 # the same network as the compose file or the backend is unreachable.
 frontend_fallback() {
   printf '%b\n' "${GREEN}compose up failed; falling back to docker run on $FRONTEND_NETWORK:${NC}"
-  docker rm -f 02_rsc_wp_bun_vue_frontend 2>/dev/null
-  run_show 1 docker run -d --name 02_rsc_wp_bun_vue_frontend \
+  docker rm -f "$FRONTEND_CONTAINER" 2>/dev/null
+  run_show 1 docker run -d --name "$FRONTEND_CONTAINER" \
     --network "$FRONTEND_NETWORK" \
     -v "$REPO_ROOT/_02_rsc_wp_frontend:/app" -w /app \
     --env-file "$ENV_FILE" 02_rsc_wp_frontend-frontend || {
@@ -97,7 +153,7 @@ verify_stack() {
   frontend_id="$(docker compose -f "$FRONTEND_COMPOSE" ps --all -q frontend 2>/dev/null)"
   if [ -z "$frontend_id" ]; then
     # Not managed by compose when it was created by the fallback `docker run`.
-    frontend_id="$(docker inspect -f '{{.Id}}' 02_rsc_wp_bun_vue_frontend 2>/dev/null)"
+    frontend_id="$(docker inspect -f '{{.Id}}' "$FRONTEND_CONTAINER" 2>/dev/null)"
   fi
   if [ -z "$frontend_id" ]; then
     print_error "Frontend container was not created."
@@ -134,8 +190,26 @@ case "$1" in
 
   stop-all)
     printf '%b\n' "${GREEN}=== Stopping all ===${NC}"
-    docker compose -f "$BACKEND_COMPOSE" stop 2>/dev/null || true
-    docker stop 02_rsc_wp_bun_vue_frontend 2>/dev/null || true
+    _failed=0
+
+    # Compose stop is idempotent (exit 0 when nothing is running), so any
+    # non-zero status here is a real failure — missing compose file, daemon
+    # unreachable — and must not be hidden behind `|| true`.
+    _out="$(docker compose -f "$BACKEND_COMPOSE" stop 2>&1)"
+    _rc=$?
+    if [ "$_rc" -ne 0 ]; then
+      printf '%s\n' "$_out" >&2
+      _failed=1
+    elif [ -n "$_out" ]; then
+      printf '%s\n' "$_out"
+    fi
+
+    stop_named_container "$FRONTEND_CONTAINER" || _failed=1
+
+    if [ "$_failed" -ne 0 ]; then
+      printf '%b\n' "${RED}Error: stop-all could not stop every container.${NC}" >&2
+      exit 1
+    fi
     ;;
 
   stop-running-containers)
@@ -184,8 +258,24 @@ case "$1" in
 
   remove-all)
     printf '%b\n' "${GREEN}=== Removing all ===${NC}"
-    docker compose -f "$BACKEND_COMPOSE" rm -f 2>/dev/null || true
-    docker rm -f 02_rsc_wp_bun_vue_frontend 2>/dev/null || true
+    _failed=0
+
+    _out="$(docker compose -f "$BACKEND_COMPOSE" rm -f 2>&1)"
+    _rc=$?
+    if [ "$_rc" -ne 0 ]; then
+      printf '%s\n' "$_out" >&2
+      _failed=1
+    elif [ -n "$_out" ]; then
+      printf '%s\n' "$_out"
+    fi
+
+    remove_named_container "$FRONTEND_CONTAINER" || _failed=1
+
+    # `=== Done ===` means success: every step above must have succeeded.
+    if [ "$_failed" -ne 0 ]; then
+      printf '%b\n' "${RED}Error: remove-all could not remove every container.${NC}" >&2
+      exit 1
+    fi
     printf '%b\n' "${GREEN}=== Done ===${NC}"
     ;;
 
@@ -213,6 +303,9 @@ case "$1" in
 
   test-frontend)
     printf '%b\n' "${GREEN}=== Running frontend tests ===${NC}"
+    # The suite calls the backend API at :4001; fail fast with a real diagnosis
+    # instead of letting eleven tests die on connection errors.
+    check_backend_running
     docker compose -f "$FRONTEND_COMPOSE" run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts 2>&1
     ;;
 
@@ -236,5 +329,18 @@ case "$1" in
     esac
     ;;
 
-  help|*) usage ;;
+  help)
+    usage 0
+    ;;
+
+  "")
+    # No action at all: keep the old behaviour of showing the help text.
+    usage 1
+    ;;
+
+  *)
+    printf '%b\n' "${RED}Unknown action: $1${NC}"
+    printf '%b\n' "Run '$0 help' to see the available actions."
+    exit 1
+    ;;
 esac
