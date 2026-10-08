@@ -4,13 +4,13 @@ This file is the persistent backlog for follow-up work in this repository. Use i
 
 ## Completed
 
+- [x] **Harden `project-tools/db-healthcheck.sh` credentials.** Removed hardcoded defaults; resolves from env (`DB_PASS`/`PGPASSWORD`) or the backend secrets files (`secrets/db_user.txt`/`db_password.txt`), fails fast with an actionable message when no password exists. Done: no plaintext creds, 8/8 checks pass with the current stack. (2026-10-07 via `feat/rotate-db-secrets`)
 - [x] **Implement `project-tools/db-healthcheck.sh`.** Created with 7-check health suite, query modes (`-q`, `--file`), color-coded output, proper exit codes. Verified: `./project-tools/db-healthcheck.sh` passes all checks; query mode works; exits 0/1 correctly. (2026-10-05)
 
 ## In Progress
 
 ## Open
 
-- [ ] **Harden `project-tools/db-healthcheck.sh` credentials.** Remove hardcoded defaults (`DB_USER=admin`, `DB_PASS=<rotated>`) and load from env/.env without embedding secrets in script. Accept `PGUSER/PGPASSWORD/PGDATABASE`, auto-load `.env`/`_01_rsc_wpm_backend/.env`, require explicit values (fail fast) or derive from compose config. Done when script contains no plaintext creds and still works with current stack.
 - [ ] **Test the health-check failure response.** Extract `/health` response logic behind an injectable database probe if needed. Add a focused unit test that makes the probe reject and asserts HTTP 503, `{ "status": "unavailable" }`, and error logging. Keep the healthy 200 test passing. Do not stop/modify live PostgreSQL. Done when test fails if unavailable response/logging removed and passes otherwise.
 - [ ] **Externalize and rotate database credentials.** Remove inline development credential values from backend Compose and load from ignored local env/secrets. Rotate any credential previously exposed (rewriting Git history does not invalidate). Verify Compose starts with documented setup, secret source excluded from Git, scan tracked files for credential literals without reproducing secrets in docs/logs.
 - [ ] **Delete dead backend file `src/main.ts`.** Outdated duplicate of `index.ts` with wrong UsuarioService ctor (causes 2 tsc errors). Not the entry point. Done when `tsc --noEmit` in backend reports zero errors and file removed.
