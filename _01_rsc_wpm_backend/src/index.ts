@@ -16,6 +16,7 @@ from "./aplicacion/services/UsuarioService";
 import { UsuarioController }
 from "./infraestructura/adaptadores/input/http/UsuarioController";
 import { handleCreateUsuario } from "./infraestructura/adaptadores/input/http/CreateUsuarioHandler";
+import { handleHealth } from "./infraestructura/adaptadores/input/http/HealthHandler";
 import { EliminarUsuarioUseCase } from "./aplicacion/caso_uso/usuario/eliminar_usuarios/EliminarUsuarioUseCase";
 import { ActualizarUsuarioUseCase } from "./aplicacion/caso_uso/usuario/actualizar_usuarios/ActualizarUsuarioUseCase";
 import { CrearUsuarioUseCase } from "./aplicacion/caso_uso/usuario/crear_usuario/CrearUsuarioUseCase";
@@ -128,17 +129,7 @@ const server = Bun.serve({
       console.log(`\n${method} ${pathname}`);
 
       if (pathname === "/health") {
-        if (method !== "GET") {
-          return json({ error: "Method Not Allowed" }, 405);
-        }
-
-        try {
-          await db.query("SELECT 1");
-          return json({ status: "ok" });
-        } catch (error) {
-          console.error("Health check failed:", error);
-          return json({ status: "unavailable" }, 503);
-        }
+        return handleHealth(method, () => db.query("SELECT 1"));
       }
 
       /*

@@ -36,7 +36,7 @@ async function run(command: string[]): Promise<number> {
 if (!inContainer) {
   process.exitCode = await run(["bun", "test", testDirectory]);
 } else {
-  process.exitCode = await run(["bun", "test", "test/create-usuario-handler.test.ts"]);
+  process.exitCode = await run(["bun", "test", "test/create-usuario-handler.test.ts", "test/health.test.ts"]);
   if (process.exitCode !== 0) {
     process.exit(process.exitCode);
   }
