@@ -134,13 +134,10 @@ flowchart TD
 ├── bun.lock                        # Bun dependency lockfile
 ├── tsconfig.json                   # TypeScript compiler configuration (ESNext, Bundler)
 ├── commands.md                     # Reference operational notes, DB queries, and cURL snippets
-├── test_debug.ts                   # Legacy standalone integration test script
 ├── README.md                       # Comprehensive project documentation
 │
 └── src/
     ├── index.ts                    # Application entry point & Composition Root (Bun.serve)
-    ├── indexOld.ts                 # Legacy monolithic implementation (historical reference)
-    ├── main.ts                     # Alternative bootstrap entry point
     │
     ├── dominio/                    # Core business logic layer
     │   ├── eAUser.ts               # Early domain experiment interface/class
@@ -447,7 +444,7 @@ curl -X DELETE http://localhost:3000/usuarios/6
 
 ## 🧪 Testing & Debugging
 
-The Bun API integration suite covers health/readiness and user CRUD behavior against a running server. The legacy standalone script `test_debug.ts` remains available for manual regression checks.
+The Bun API integration suite covers health/readiness and user CRUD behavior against a running server.
 
 ### Running the Test Suite
 
@@ -471,12 +468,6 @@ From the repository root, these commands run the API suite from each container's
 ```
 
 The backend container targets `http://localhost:4001`; the frontend test container targets the backend using the hostname configured by `API_URL`. A configured target is never replaced with localhost if unreachable, so a network/configuration failure fails the suite rather than testing a different route. When `API_URL` is unset for a local run, the suite defaults to `http://localhost:4001`.
-
-The legacy sequential test script remains available separately:
-
-```bash
-bun test_debug.ts
-```
 
 ### Test Coverage
 
