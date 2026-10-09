@@ -141,6 +141,31 @@ describe("Backend API — usuarios (parallel TDD)", () => {
     }
   });
 
+  test(`PUT ${BASE_URL}/usuarios/:id returns 400 when the email is invalid`, async () => {
+    const created = await createTestUser("Backend API invalid email");
+    try {
+      const response = await fetch(`${BASE_URL}/usuarios/${created.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre: "Backend API invalid email", email: "not-an-email" }),
+      });
+      expect(response.status).toBe(400);
+    } finally {
+      await cleanupTestUser(created.id);
+    }
+  });
+
+  test(`PUT ${BASE_URL}/usuarios/:id returns 404 when the user does not exist`, async () => {
+    const created = await createTestUser("Backend API gone");
+    await cleanupTestUser(created.id);
+    const response = await fetch(`${BASE_URL}/usuarios/${created.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: "Backend API gone", email: `gone_${crypto.randomUUID()}@test.com` }),
+    });
+    expect(response.status).toBe(404);
+  });
+
   test(`DELETE ${BASE_URL}/usuarios/:id removes the user`, async () => {
     const created = await createTestUser("Backend API delete");
     try {

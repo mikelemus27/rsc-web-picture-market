@@ -23,6 +23,8 @@ import { CrearUsuarioUseCase } from "./aplicacion/caso_uso/usuario/crear_usuario
 import { ObtenerUsuarioUseCase } from "./aplicacion/caso_uso/usuario/obtener_usuario/ObtenerUsuarioUseCase";
 import { ListarUsuariosUseCase } from "./aplicacion/caso_uso/usuario/listar_usuarios/ListarUsuariosUseCase";
 import { ActualizarUsuarioRequest } from "./aplicacion/dto/ActualizarUsuarioRequest";
+import { UsuarioValidationError } from "./dominio/errors/UsuarioValidationError";
+import { UsuarioNotFoundError } from "./dominio/errors/UsuarioNotFoundError";
 
 /*
 ==================================================
@@ -281,11 +283,33 @@ const server = Bun.serve({
 
           } catch (error: any) {
 
+            if (error instanceof UsuarioValidationError) {
+
+              return json(
+                {
+                  error: error.message,
+                },
+                400
+              );
+            }
+
+            if (error instanceof UsuarioNotFoundError) {
+
+              return json(
+                {
+                  error: error.message,
+                },
+                404
+              );
+            }
+
+            console.error("Unexpected error updating user:", error);
+
             return json(
               {
-                error: error.message,
+                error: "Internal Server Error",
               },
-              404
+              500
             );
           }
         }
