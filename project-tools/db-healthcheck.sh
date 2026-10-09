@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Project-tools: PostgreSQL health check and ad-hoc query runner
 # Author: miguel.gallardo.lemus@gmail.com
-# Usage: ./project-tools/db-healthcheck.sh [--check <list> | -q <sql> | --file <path>]
+# Usage: ./project-tools/db-healthcheck.sh [--check <list> | -q <sql> | --file <path> | --db-name | --tables | --columns <table>]
 #
 # Independent tool. It reads container-management.sh and the compose files but
 # never modifies them, and it is not wired into them.
@@ -57,6 +57,9 @@ Options:
       --file <path>    Run every query in a file, one per line (# comments
                        and blank lines are skipped).
       --check <list>   Run only the named checks, comma-separated.
+      --db-name        Print the connected database name (one raw line).
+      --tables         List base tables in DB_SCHEMA (one per line).
+      --columns <tab>  List a table's columns as name|type|max_len|nullable.
       --no-color       Disable ANSI color (also automatic when not a TTY).
   -h, --help           Show this help.
 
@@ -70,7 +73,8 @@ Checks available to --check:
   constraints   PK, UNIQUE and NOT NULL are present
   data          The table can be read; prints the row count
 
-Modes are mutually exclusive: --check, -q and --file cannot be combined.
+Modes are mutually exclusive: --check, -q, --file, --db-name, --tables and
+--columns cannot be combined.
 
 Environment overrides:
   DB_USER DB_PASS PGPASSWORD DB_NAME DB_SERVICE DB_SCHEMA DB_TABLE COMPOSE_FILE TIMEOUT_SECS
@@ -84,6 +88,9 @@ Examples:
   $0 --check container,pg_ready
   $0 -q "SELECT * from usuario LIMIT 5"
   $0 --file queries.sql
+  $0 --db-name
+  $0 --tables
+  $0 --columns usuario
 EOF
   # Help is a successful outcome and must stop here. Without this the -h branch
   # never shifts, so the argument loop spins and reprints usage forever.
@@ -511,11 +518,49 @@ run_query_file() {
 }
 
 # ---------------------------------------------------------------------------
+# Introspection mode. Single-intent, machine-readable discovery of the live
+# schema. Output is raw (-t -A via sql_value) so the result can be captured
+# into a variable, e.g. name="$(db-healthcheck.sh --db-name)".
+# ---------------------------------------------------------------------------
+show_database_name() {
+  require_container_for_queries
+  local name
+  name="$(sql_value "SELECT current_database();")" || fail "Could not read the database name."
+  [ -n "$name" ] || fail "The database reported an empty name."
+  printf '%s\n' "$name"
+}
+
+show_tables() {
+  require_container_for_queries
+  local tables
+  tables="$(sql_value "SELECT table_name FROM information_schema.tables
+    WHERE table_schema = '$DB_SCHEMA' AND table_type = 'BASE TABLE'
+    ORDER BY table_name;")" || fail "Could not list tables in schema '$DB_SCHEMA'."
+  printf '%s\n' "$tables"
+}
+
+show_columns() {
+  local table="$1"
+  require_container_for_queries
+  local reg cols
+  reg="$(sql_value "SELECT to_regclass('$DB_SCHEMA.$table');")" || fail "Could not query the catalog for '$DB_SCHEMA.$table'."
+  [ -n "$reg" ] || fail "Table '$DB_SCHEMA.$table' does not exist."
+  cols="$(sql_value "SELECT column_name, data_type, COALESCE(character_maximum_length::text, ''), is_nullable
+    FROM information_schema.columns
+    WHERE table_schema = '$DB_SCHEMA' AND table_name = '$table'
+    ORDER BY ordinal_position;")" || fail "Could not read information_schema.columns for '$DB_SCHEMA.$table'."
+  printf '%s\n' "$cols"
+}
+
+# ---------------------------------------------------------------------------
 # Argument parsing
 # ---------------------------------------------------------------------------
 QUERIES=()
 QUERY_FILE=""
 CHECK_FILTER=""
+SHOW_DB_NAME="false"
+SHOW_TABLES="false"
+SHOW_COLUMNS_TABLE=""
 NO_COLOR="false"
 
 while [ $# -gt 0 ]; do
@@ -537,6 +582,20 @@ while [ $# -gt 0 ]; do
       CHECK_FILTER="$2"
       shift 2
       ;;
+    --db-name)
+      SHOW_DB_NAME="true"
+      shift
+      ;;
+    --tables)
+      SHOW_TABLES="true"
+      shift
+      ;;
+    --columns)
+      [ $# -ge 2 ] || fail "--columns requires a table name."
+      [ -z "$SHOW_COLUMNS_TABLE" ] || fail "--columns given more than once."
+      SHOW_COLUMNS_TABLE="$2"
+      shift 2
+      ;;
     --no-color)
       NO_COLOR="true"
       shift
@@ -556,17 +615,26 @@ done
 setup_colors
 preflight
 
-# Mode arbitration: the three modes never overlap.
+# Mode arbitration: every mode is single-intent and they never overlap.
 MODES=0
 [ "${#QUERIES[@]}" -gt 0 ] && MODES=$((MODES + 1))
 [ -n "$QUERY_FILE" ] && MODES=$((MODES + 1))
 [ -n "$CHECK_FILTER" ] && MODES=$((MODES + 1))
-[ "$MODES" -gt 1 ] && fail "Choose one mode: --check, -q/--query, or --file (they cannot be combined)."
+[ "$SHOW_DB_NAME" = "true" ] && MODES=$((MODES + 1))
+[ "$SHOW_TABLES" = "true" ] && MODES=$((MODES + 1))
+[ -n "$SHOW_COLUMNS_TABLE" ] && MODES=$((MODES + 1))
+[ "$MODES" -gt 1 ] && fail "Choose one mode: --check, -q/--query, --file, --db-name, --tables, or --columns (they cannot be combined)."
 
 if [ "${#QUERIES[@]}" -gt 0 ]; then
   run_queries
 elif [ -n "$QUERY_FILE" ]; then
   run_query_file "$QUERY_FILE"
+elif [ "$SHOW_DB_NAME" = "true" ]; then
+  show_database_name
+elif [ "$SHOW_TABLES" = "true" ]; then
+  show_tables
+elif [ -n "$SHOW_COLUMNS_TABLE" ]; then
+  show_columns "$SHOW_COLUMNS_TABLE"
 else
   run_suite "$CHECK_FILTER"
 fi
