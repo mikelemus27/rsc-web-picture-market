@@ -102,10 +102,13 @@ setup_colors() {
   if [ "$NO_COLOR" = "true" ] || [ ! -t 1 ]; then
     RED='' GREEN='' YELLOW='' NC=''
   else
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[1;33m'
-    NC='\033[0m'
+    # ANSI-C quoting: the variables hold the real ESC byte (0x1B), not the
+    # literal text "\033". Only this form is safe for both print paths:
+    # `printf '%s'` in run_check and `echo -e` in fail/print_summary.
+    RED=$'\033[0;31m'
+    GREEN=$'\033[0;32m'
+    YELLOW=$'\033[1;33m'
+    NC=$'\033[0m'
   fi
 }
 
@@ -171,10 +174,12 @@ run_guarded() {
 compose() { $COMPOSE_CMD -f "$COMPOSE_FILE" "$@"; }
 
 # Execute SQL and return the raw value, machine-readable and unaligned.
-# Quiet (-q) so notices never contaminate the value we parse.
+# Quiet (-q) so notices never contaminate the value we parse. stdin is
+# detached (</dev/null): run_guarded + compose exec under a TTY stdin would
+# SIGTTIN-stop the process and hang the whole suite.
 sql_value() {
   run_guarded $COMPOSE_CMD -f "$COMPOSE_FILE" exec -T "$DB_SERVICE" \
-    psql -U "$DB_USER" -d "$DB_NAME" -q -t -A -c "$1" 2>/dev/null
+    psql -U "$DB_USER" -d "$DB_NAME" -q -t -A -c "$1" </dev/null 2>/dev/null
 }
 
 # Execute SQL and let psql print its own table output.
@@ -235,7 +240,7 @@ check_pg_ready() {
   local out rc
   set +e
   out="$(run_guarded $COMPOSE_CMD -f "$COMPOSE_FILE" exec -T "$DB_SERVICE" \
-    pg_isready -U "$DB_USER" -d "$DB_NAME" 2>&1)"
+    pg_isready -U "$DB_USER" -d "$DB_NAME" </dev/null 2>&1)"
   rc=$?
   set -e
   echo "${out:-no output}"
