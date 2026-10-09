@@ -9,6 +9,8 @@ import { UsuarioDTO } from "../../../dto/UsuarioDTO";
 import { ActualizarUsuarioRequest } from "../../../dto/ActualizarUsuarioRequest";
 import type { IActualizarUsuarioUseCase } from "../../../ports/input/usuario/IActualizarUsuarioUseCase";
 
+import { UsuarioNotFoundError } from "../../../../dominio/errors/UsuarioNotFoundError";
+
 export class ActualizarUsuarioUseCase  implements IActualizarUsuarioUseCase {
 
   constructor(
@@ -31,7 +33,7 @@ export class ActualizarUsuarioUseCase  implements IActualizarUsuarioUseCase {
         .findById(id);
 
     if (!usuario) {
-      throw new Error(
+      throw new UsuarioNotFoundError(
         "Usuario no encontrado"
       );
     }
