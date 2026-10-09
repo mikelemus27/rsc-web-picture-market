@@ -12,12 +12,6 @@
       ],
       "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/automation-strategy"
     },
-    "bro": {
-      "files": [
-        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/bro"
-      ],
-      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/bro"
-    },
     "clarify": {
       "files": [
         "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/clarify"
@@ -47,12 +41,6 @@
         "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/deprecation"
       ],
       "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/deprecation"
-    },
-    "eli5": {
-      "files": [
-        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/eli5"
-      ],
-      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/eli5"
     },
     "fable-operator": {
       "files": [
@@ -132,12 +120,6 @@
       ],
       "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/ship"
     },
-    "show-me": {
-      "files": [
-        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/show-me"
-      ],
-      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/show-me"
-    },
     "simplify-code": {
       "files": [
         "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/simplify-code"
@@ -209,7 +191,8 @@
     "developer",
     "refuter-correctness",
     "refuter-security",
-    "refuter-tests"
+    "refuter-tests",
+    "finding-verifier"
   ],
   "agentCollisions": [],
   "explicitAgents": [
@@ -227,6 +210,8 @@
     "baseAgents": true,
     "alwaysOn": true,
     "codeHooks": true,
+    "dangerGuard": true,
+    "laneGate": true,
     "gitmojiGuard": true,
     "memory": true,
     "context7": false
@@ -247,9 +232,10 @@
     "verify"
   ],
   "commandCollisions": [],
-  "version": "2.0.15",
+  "version": "3.0.12",
   "ignoreEntriesAdded": [
     ".github/agents/developer.agent.md",
+    ".github/agents/finding-verifier.agent.md",
     ".github/agents/refuter-correctness.agent.md",
     ".github/agents/refuter-security.agent.md",
     ".github/agents/refuter-tests.agent.md",
@@ -301,5 +287,27 @@
     ".github/rsc/unslop",
     ".github/rsc/verify",
     ".github/rsc/worktrees"
-  ]
+  ],
+  "agentsKept": [
+    {
+      "name": "refuter-correctness",
+      "path": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/agents/refuter-correctness.agent.md"
+    },
+    {
+      "name": "refuter-security",
+      "path": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/agents/refuter-security.agent.md"
+    },
+    {
+      "name": "refuter-tests",
+      "path": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/agents/refuter-tests.agent.md"
+    }
+  ],
+  "update": {
+    "mode": "agent"
+  },
+  "knowledge": {
+    "mode": "unsupported",
+    "reason": null,
+    "paths": []
+  }
 }

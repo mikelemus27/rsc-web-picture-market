@@ -22,13 +22,11 @@
   "skills": [
     "analyze",
     "automation-strategy",
-    "bro",
     "clarify",
     "constitution",
     "debug",
     "decision-challenge",
     "deprecation",
-    "eli5",
     "fable-operator",
     "ftd",
     "git-workflow",
@@ -43,7 +41,6 @@
     "sdd",
     "sdd-init",
     "ship",
-    "show-me",
     "simplify-code",
     "source-grounded-development",
     "specify",
@@ -62,7 +59,7 @@
     "refuter-tests"
   ],
   "ownSkills": [],
-  "catalogVersion": "2.0.15",
+  "catalogVersion": "3.0.12",
   "tier": null,
   "optOuts": [],
   "onboarding": {

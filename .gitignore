@@ -811,3 +811,30 @@
 
 # rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .zed/rsc/technical-writing
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.worktrees/
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.claude/agents/finding-verifier.md
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.codex/agents/finding-verifier.toml
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.github/agents/finding-verifier.agent.md
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.cursor/agents/finding-verifier.md
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.gemini/agents/finding-verifier.md
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.junie/agents/finding-verifier.md
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.kiro/agents/finding-verifier.json
+
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+.opencode/agents/finding-verifier.md
