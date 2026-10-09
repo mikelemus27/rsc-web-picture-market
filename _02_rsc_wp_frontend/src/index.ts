@@ -38,15 +38,6 @@ TESTS
 ==================================================
 */
 
-const tests = [
-
-  new GetUsuariosTest( apiService),
-  new CreateUsuarioTest(apiService),
-  new InvalidRouteTest(),
-  new UpdateUsuarioTest(apiService,1)
-  ,new DeleteUsuarioTest(apiService,20)
-];
-
 /*
 ==================================================
 RUNNER
@@ -63,6 +54,43 @@ const reporter =
 
 /*
 ==================================================
+PROVISIONING
+==================================================
+*/
+
+async function provisionTestUser(
+  api: UsuarioApiService
+): Promise<number> {
+
+  const body = {
+
+    nombre: "Provisioned Test User",
+
+    email:
+      `provisioned_${Date.now()}@mail.com`
+
+  };
+
+  const response =
+    await api.createUsuario(body);
+
+  if (response.status !== 201) {
+
+    throw new Error(
+      `Could not provision a test user (HTTP ${response.status})`
+    );
+
+  }
+
+  const data =
+    await response.json() as { id: number };
+
+  return data.id;
+
+}
+
+/*
+==================================================
 EJECUCIÓN
 ==================================================
 */
@@ -72,6 +100,19 @@ async function main() {
   consolePrinter.printTitle(
     "🧪 INICIANDO TESTS"
   );
+
+  const provisionedUserId =
+    await provisionTestUser(apiService);
+
+  const tests = [
+
+    new GetUsuariosTest(apiService),
+    new CreateUsuarioTest(apiService),
+    new InvalidRouteTest(),
+    new UpdateUsuarioTest(apiService, provisionedUserId)
+    ,new DeleteUsuarioTest(apiService, provisionedUserId)
+
+  ];
 
   const results =
     await runner.runTests(tests);
