@@ -15,8 +15,8 @@
     "test:unit": "bun test test/create-usuario-handler.test.ts",
     "test:api": "bun test test/usuarios.backend.api.test.ts",
     "test:all": "bun run run-backend-tests.ts",
-    "test:full": "TEST_URL=http://localhost:4001 bun test test/usuarios.backend.api.test.ts",
-    "test:tdd": "TEST_URL=http://localhost:4001 bun test test/usuarios.backend.api.test.ts"
+    "test:full": "TEST_URL=http://localhost:${PORT:-4001} bun test test/usuarios.backend.api.test.ts",
+    "test:tdd": "TEST_URL=http://localhost:${PORT:-4001} bun test test/usuarios.backend.api.test.ts"
   },
   "dependencies": {
     "pg": "^8.20.0"

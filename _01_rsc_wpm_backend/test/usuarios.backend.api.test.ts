@@ -7,7 +7,9 @@
 import { describe, test, expect } from "bun:test";
 
 // Use localhost only when no API_URL was configured, as in a local test run.
-const LOCAL_BASE_URL = "http://localhost:4001";
+// The port comes from PORT (root .env, exported by container-management.sh),
+// defaulting to 4001 so a bare local run still works.
+const LOCAL_BASE_URL = `http://localhost:${process.env.PORT ?? "4001"}`;
 // Remove surrounding whitespace and trailing slashes so endpoint paths can be appended consistently.
 const CONFIGURED_BASE_URL = process.env.API_URL?.trim().replace(/\/+$/, "");
 const BASE_URL = CONFIGURED_BASE_URL || LOCAL_BASE_URL;
