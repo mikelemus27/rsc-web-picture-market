@@ -82,6 +82,8 @@ Observed after the change, on branch `chore/dev-backend-port-from-env`:
 | Interpolation (override) | `PORT=5055 docker compose -f … config` | `PORT: "5055"`, `published: "5055"` (mapping + container env together) |
 | Suite after extension | `test-backend` / `test-backend --container` | 24 pass / 0 fail; 13 pass / 0 fail |
 | Typecheck after extension | `bunx tsc --noEmit` | exit 0, no output |
+| Recreated with new compose | `container-management.sh start-all` then `docker inspect` | container recreated; `Config.Env` now has `PORT=4001`, binding resolved from `${PORT}` (before recreation it had no `PORT`) |
+| Suites after recreate | `test-backend` / `test-backend --container` / `test-frontend` | 24 pass / 0 fail, 13 pass / 0 fail, 11 pass / 0 fail |
 
 ## Next step
 
