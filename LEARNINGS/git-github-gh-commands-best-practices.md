@@ -686,3 +686,92 @@ Applied here on 2026-10-10: after the rsc 3.0.12 → 3.0.18 same-major auto-upda
 wait for a decision because that major does not ask — see `rsc-harness-learnings.md` §6), seven
 tracked files appeared as ` M`. They were parked in `stash@{0}` with a descriptive message instead
 of being swept into PR #42, whose diff stayed limited to the dead-code removal.
+
+---
+
+# Stacked PRs, issue/PR numbering, and one-change-one-PR (2026-10-11)
+
+Added from the backend PORT work (`issue #43` → `PR #44`; `issue #45` → `PR #46`, delivered by
+`PR #47`) and the "which is which?" confusion it produced in the same session. Every ref, sha and
+count below was checked against `gh`/`git` on 2026-10-11.
+
+### 36. Issues and pull requests share ONE number sequence
+
+GitHub draws issues and pull requests from a **single shared counter**, so the numbers interleave
+and a bare number does not reveal its type:
+
+```bash
+gh issue view 43 --json number,title   # -> #43 issue  "Use process.env.PORT ..."
+gh pr    view 44 --json number,title   # -> #44 PR     "feat: read backend server port ..."
+```
+
+`#43` (issue) sits next to `#44` (PR); `#45` (issue) next to `#46` (PR). Writing `#44` without a
+prefix is ambiguous in chat. **Convention adopted here: always write `issue #N` or `PR #N`, never a
+bare `#N`.** This is the single biggest source of "which one is the PR?" confusion — the number
+alone never answers it, and on GitHub the only visual cue is the icon (merged-PR vs issue circle).
+
+### 37. A stacked PR merges into its BASE BRANCH unless that base is deleted first
+
+A child PR whose base is another PR's branch only **auto-retargets** to the base's base when the
+base branch is actually **deleted**. If the base branch still exists, merging the child lands the
+commits **on that branch**, not on `dev`.
+
+What happened here (verified with ancestry checks, not the MERGED badge):
+
+```bash
+git merge-base --is-ancestor 28fd083 origin/dev && echo yes || echo no   # -> no  (extension absent from dev)
+git --no-pager log --oneline -3 origin/dev
+# 279df27 Merge pull request #44 ...
+# ad3775e docs(todo): ...
+git --no-pager log --oneline -3 origin/chore/dev-backend-port-from-env
+# 9635716 Merge pull request #46 ...   ← the extension landed HERE, not on dev
+# 7f94c0d docs(todo): record PORT single source ...
+# 28fd083 feat(backend): make PORT a single source ...
+```
+
+`PR #44` merged into `dev`; its branch was **not** deleted (§31: this repo keeps branches), so
+`PR #46` never retargeted and merged into `chore/dev-backend-port-from-env`. `dev` was missing the
+9-file extension until a new PR (`#47`, base `dev` ← head `chore/dev-backend-port-from-env`) was
+opened to deliver it. Nothing was lost — only mis-routed.
+
+Order that works while preserving branches:
+- Merge the predecessor to `dev`, then **explicitly retarget the child's base**
+  (`gh pr edit <child> --base dev`) **before** merging the child; or
+- Merge the child **after** the predecessor is already in `dev` and the child's base has moved to
+  `dev`.
+- Never rely on auto-retarget alone here — the branch is never deleted, so it never fires.
+- Verify delivery with an ancestry check, not the MERGED badge:
+  `git merge-base --is-ancestor <sha> origin/dev`.
+
+### 38. One change = issue → branch → PR; never fold new scope into an existing PR
+
+A second concern (making `PORT` a single source) was first appended onto `PR #44`'s branch with no
+issue of its own. That made the PR do **more than its issue described** — the traceability the rule
+exists to protect was broken.
+
+Corrected here: new `issue #45` → branch `chore/dev-backend-port-single-source` → `PR #46`; and
+`PR #44` was reset to its two original commits and force-pushed:
+
+```bash
+git reset --hard ad3775e                 # PR #44 back to issue #43's scope only
+git push --force-with-lease
+```
+
+Authorization to *commit* does **not** waive the need for an issue covering the new scope.
+
+Technique: to move a branch's top commits onto their own branch, cherry-pick them onto their
+parent's commit — a clean, conflict-free reproduction when they are the branch tip:
+
+```bash
+git checkout -b <new-branch> <predecessor-tip> && git cherry-pick <c1> <c2>
+```
+
+### 39. Reinforcing §31: UI merges do NOT delete branches (2026-10-11 evidence)
+
+`#44`, `#46` and `#47` were all merged through the GitHub UI this session; all three head branches
+still exist on the remote. This confirms §27/§31: the silent deletion comes from `pr-merge.sh`'s
+`--delete-branch`, not from GitHub and not from any auto-delete setting:
+
+```bash
+gh api repos/mikelemus27/rsc-web-picture-market --jq '.delete_branch_on_merge'   # -> false
+```
