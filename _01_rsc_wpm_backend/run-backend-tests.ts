@@ -22,7 +22,7 @@ const inContainer = args[0] === "--container";
 
 console.log(inContainer
   ? "Running handler unit tests locally, then API tests inside the Compose backend container..."
-  : `Running backend handler unit tests and API tests locally against ${process.env.TEST_URL ?? "http://localhost:4001"}...`);
+  : `Running backend handler unit tests and API tests locally against ${process.env.TEST_URL ?? `http://localhost:${process.env.PORT ?? "4001"}`}...`);
 
 async function run(command: string[]): Promise<number> {
   const process = Bun.spawn(command, {
@@ -54,9 +54,9 @@ if (!inContainer) {
         "exec",
         "-T",
         "-e",
-        "TEST_URL=http://localhost:4001",
+        `TEST_URL=http://localhost:${process.env.PORT ?? "4001"}`,
         "-e",
-        "API_URL=http://localhost:4001",
+        `API_URL=http://localhost:${process.env.PORT ?? "4001"}`,
         "backend",
         "bun",
         "test",

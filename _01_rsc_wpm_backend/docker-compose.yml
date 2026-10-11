@@ -44,9 +44,14 @@ services:
     container_name: 01_rsc_wpm_bun_psgres-backend
     restart: unless-stopped
     ports:
-      # Publish the API on the same port used by the Bun server in the container.
-      - "4001:4001"
+      # Publish the API on the same port the Bun server listens on. Both sides
+      # come from PORT so the host mapping and the in-container listener move
+      # together; the default 4001 keeps a plain `docker compose up` working.
+      - "${PORT:-4001}:${PORT:-4001}"
     environment:
+      # The server reads PORT (src/index.ts). Compose interpolates it from the
+      # root .env through container-management.sh, defaulting to 4001.
+      PORT: ${PORT:-4001}
       DB_HOST: postgres
       # The app reads these credential files (see postgres.ts) instead of
       # receiving passwords as environment variables.
