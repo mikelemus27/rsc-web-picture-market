@@ -199,7 +199,7 @@ The microservice automatically reads connection parameters from environment vari
 | `DB_USER` | PostgreSQL database username | `admin` | `admin` |
 | `DB_PASSWORD` | PostgreSQL database password | `REMOVED` | `REMOVED` |
 | `DB_NAME` | PostgreSQL database name | `escuela` | `escuela` |
-| `PORT` | Microservice listening port | `3000` | `3000` |
+| `PORT` | Microservice listening port | `4001` | `4001` |
 
 ---
 
