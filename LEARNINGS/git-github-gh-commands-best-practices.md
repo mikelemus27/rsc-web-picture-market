@@ -639,3 +639,50 @@ docs commit (`docs(todo): ...`), separate from the code commits.
 - No `Co-Authored-By` or AI attribution trailers (§16).
 - Confirm the pushed range from the push output (here `46a9ace..926ec35`, then `926ec35..ba7f167`) and
   verify the PR picked it up with `gh pr view <n> --json commits`.
+
+# git status states and tools that modify files without committing (2026-10-10)
+
+Added from the rsc-harness session that shipped PR #42; the trigger read `M` in `git status --short`
+after the harness synced itself and needed to be explained before deciding what to do with it.
+
+### 35. Reading `git status --short`: what `M`, `D` and `??` tell you
+
+`git status --short` prints two columns per file: the first is the **index** (staged), the second is
+the **worktree** (on disk). Both are relative, so ` M` and `M ` are different states:
+
+```text
+ M file   = modified, NOT staged (change exists only on disk; leading space = not in the index)
+M  file   = modified, staged (`git add` was run; the commit is ready)
+D  file   = deleted, staged
+ D file   = deleted on disk, not staged
+?? file   = untracked (never committed; not in HEAD at all)
+```
+
+A file reports `M` whenever its on-disk content differs from the last commit (`HEAD`). Nothing
+moves to the index or into history until someone runs `git add`, then `git commit` — git records
+files, it does not decide for you.
+
+**Tools that manage a repo's files write content but deliberately never `git add`/`git commit`.**
+rsc's `sync` is the example here: after an upgrade it rewrites tracked harness files (`AGENTS.md`,
+`GEMINI.md`, `CONVENTIONS.md`, `.github/copilot-instructions.md`, `.gitignore`, `.rsc.json`,
+`.github/rsc/.rsc-state.json`) and leaves them as ` M` — "rsc never commits them for you" is a
+stated design rule, because a push of `AGENTS.md` runs on every machine that reads it and needs a
+human decision. Package managers and formatters follow the same convention.
+
+Consequences of an uncommitted `M`, in order of reversibility:
+
+- It lives **only on this machine**: `git commit`/`git push` will not carry it, a clone will not
+  inherit it, CI will not see it.
+- `git stash push -m "…"` parks it reversibly (`git stash list`, `git stash pop` to restore).
+- `git checkout -- <file>` or `git restore <file>` **discards** it permanently.
+- Inspect before deciding: `git diff --stat` (scope) and `git diff <file>` (content).
+
+Two staging gotchas observed in this repo: `git add -u <path>` stages modifications and deletions
+of tracked files but **not new untracked files** (the PR #38 FTD doc was accidentally shipped
+inside PR #40's commit that way), and stage specific intended paths instead of `git add -A` when a
+tool may have touched several editors (see "Track shared GitHub templates" section above).
+
+Applied here on 2026-10-10: after the rsc 3.0.12 → 3.0.18 same-major auto-update (which did not
+wait for a decision because that major does not ask — see `rsc-harness-learnings.md` §6), seven
+tracked files appeared as ` M`. They were parked in `stash@{0}` with a descriptive message instead
+of being swept into PR #42, whose diff stayed limited to the dead-code removal.
