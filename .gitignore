@@ -47,8 +47,6 @@
 .aider/rsc/worktrees
 .aider/rsc/git-workflow
 .aider/rsc/.rsc-state.json
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .amp/rsc/analyze
 .amp/rsc/automation-strategy
 .amp/rsc/bro
@@ -83,8 +81,6 @@
 .amp/rsc/worktrees
 .amp/rsc/git-workflow
 .amp/rsc/.rsc-state.json
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .antigravity/rsc/analyze
 .antigravity/rsc/automation-strategy
 .antigravity/rsc/bro
@@ -119,8 +115,6 @@
 .antigravity/rsc/worktrees
 .antigravity/rsc/git-workflow
 .antigravity/rsc/.rsc-state.json
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .claude/skills/analyze
 .claude/skills/automation-strategy
 .claude/skills/bro
@@ -163,8 +157,6 @@
 .claude/commands/learn.md
 .claude/commands/resume-session.md
 .claude/commands/save-session.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .clinerules/rsc/analyze
 .clinerules/rsc/automation-strategy
 .clinerules/rsc/bro
@@ -212,8 +204,6 @@
 .clinerules/workflows/specify.md
 .clinerules/workflows/tasks.md
 .clinerules/workflows/verify.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .codex/rsc/analyze
 .codex/rsc/automation-strategy
 .codex/rsc/bro
@@ -252,8 +242,6 @@
 .codex/agents/refuter-correctness.toml
 .codex/agents/refuter-security.toml
 .codex/agents/refuter-tests.toml
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .continue/rsc/analyze
 .continue/rsc/automation-strategy
 .continue/rsc/bro
@@ -288,8 +276,6 @@
 .continue/rsc/worktrees
 .continue/rsc/git-workflow
 .continue/rsc/.rsc-state.json
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .github/rsc/analyze
 .github/rsc/automation-strategy
 .github/rsc/bro
@@ -341,8 +327,6 @@
 .github/prompts/specify.prompt.md
 .github/prompts/tasks.prompt.md
 .github/prompts/verify.prompt.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .cursor/rules/analyze.mdc
 .cursor/rules/automation-strategy.mdc
 .cursor/rules/bro.mdc
@@ -397,8 +381,6 @@
 .cursor/commands/specify.md
 .cursor/commands/tasks.md
 .cursor/commands/verify.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .gemini/rsc/analyze
 .gemini/rsc/automation-strategy
 .gemini/rsc/bro
@@ -453,8 +435,6 @@
 .gemini/commands/specify.toml
 .gemini/commands/tasks.toml
 .gemini/commands/verify.toml
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .jules/rsc/analyze
 .jules/rsc/automation-strategy
 .jules/rsc/bro
@@ -489,8 +469,6 @@
 .jules/rsc/worktrees
 .jules/rsc/git-workflow
 .jules/rsc/.rsc-state.json
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .junie/rsc/analyze
 .junie/rsc/automation-strategy
 .junie/rsc/bro
@@ -529,8 +507,6 @@
 .junie/agents/refuter-correctness.md
 .junie/agents/refuter-security.md
 .junie/agents/refuter-tests.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .kiro/rsc/analyze
 .kiro/rsc/automation-strategy
 .kiro/rsc/bro
@@ -569,8 +545,6 @@
 .kiro/agents/refuter-correctness.json
 .kiro/agents/refuter-security.json
 .kiro/agents/refuter-tests.json
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .opencode/rsc/analyze
 .opencode/rsc/automation-strategy
 .opencode/rsc/bro
@@ -625,8 +599,6 @@
 .opencode/commands/specify.md
 .opencode/commands/tasks.md
 .opencode/commands/verify.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .roo/rsc/analyze
 .roo/rsc/automation-strategy
 .roo/rsc/bro
@@ -674,8 +646,6 @@
 .roo/commands/specify.md
 .roo/commands/tasks.md
 .roo/commands/verify.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .windsurf/rsc/analyze
 .windsurf/rsc/automation-strategy
 .windsurf/rsc/bro
@@ -723,8 +693,6 @@
 .windsurf/workflows/specify.md
 .windsurf/workflows/tasks.md
 .windsurf/workflows/verify.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .zed/rsc/analyze
 .zed/rsc/automation-strategy
 .zed/rsc/bro
@@ -760,81 +728,46 @@
 .zed/rsc/git-workflow
 .zed/rsc/.rsc-state.json
 .atl/
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .aider/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .amp/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .antigravity/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .claude/skills/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .clinerules/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .codex/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .continue/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .github/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .cursor/rules/technical-writing.mdc
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .gemini/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .jules/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .junie/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .kiro/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .opencode/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .roo/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .windsurf/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .zed/rsc/technical-writing
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .worktrees/
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .claude/agents/finding-verifier.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .codex/agents/finding-verifier.toml
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .github/agents/finding-verifier.agent.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .cursor/agents/finding-verifier.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .gemini/agents/finding-verifier.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .junie/agents/finding-verifier.md
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .kiro/agents/finding-verifier.json
-
-# rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .opencode/agents/finding-verifier.md
+.aider/rsc/connect-tool
+.amp/rsc/connect-tool
+.antigravity/rsc/connect-tool
+.claude/skills/connect-tool
+.clinerules/rsc/connect-tool
+.codex/rsc/connect-tool
+.continue/rsc/connect-tool
+.github/rsc/connect-tool
+.cursor/rules/connect-tool.mdc
+.gemini/rsc/connect-tool
+.jules/rsc/connect-tool
+.junie/rsc/connect-tool
+.kiro/rsc/connect-tool
+.opencode/rsc/connect-tool
+.roo/rsc/connect-tool
+.windsurf/rsc/connect-tool
+.zed/rsc/connect-tool
