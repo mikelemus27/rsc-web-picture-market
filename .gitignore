@@ -1,15 +1,41 @@
 # Local Pi runtime state
-.atl/ .aider/ .amp/ .antigravity/ .claude/ .clinerules/ .codex/ .continue/ .cursor/ .gemini/ .jules/ .junie/ .kiro/ .opencode/ .roo/ .rsc/ .windsurf/ .zed/ .rsc/backups/ .rsc/memory/
-.agents/ .aider/ .amp/ .antigravity/ .codex/ .continue/ .gemini/ .jules/ .junie/ .kiro/ .opencode/ .roo/ .windsurf/ .zed/ .claude/
+.atl/
+.aider/
+.amp/
+.antigravity/
+.claude/
+.clinerules/
+.codex/
+.continue/
+.cursor/
+.gemini/
+.jules/
+.junie/
+.kiro/
+.opencode/
+.roo/
+.rsc/
+.windsurf/
+.zed/
+.rsc/backups/
+.rsc/memory/
+.agents/
 # Runtime artifacts (not project files)
-.rsc/ .rsc-state.json .rsc/*.mjs .rsc/*.json
-.docker-compose-fix.md .docker-fix.md
+.rsc/
+.rsc-state.json
+.rsc/*.mjs
+.rsc/*.json
+.docker-compose-fix.md
+.docker-fix.md
 # Local environment files — never commit secrets (one pattern per line)
 .env
 .env.local
 .env.production
 # GitHub harness artifacts that should not commit to repo root
-.github/agents/ .github/prompts/ .github/rsc/ .github/copilot-instructions.md
+.github/agents/
+.github/prompts/
+.github/rsc/
+.github/copilot-instructions.md
 
 # rsc local state (hooks, seals, logs) and managed skill links — machine-local
 .rsc/
