@@ -29,7 +29,7 @@ This file is the persistent backlog for follow-up work in this repository. Use i
 - [ ] **Add authentication and authorization to the API.** All endpoints open. Implement at minimum API key/JWT middleware for protected routes. Done when unauthenticated requests to `/usuarios` return 401.
 - [ ] **Add CORS configuration.** No CORS headers; blocks browser requests. Add configurable CORS middleware. Done when cross-origin requests from allowed origins succeed.
 - [ ] **Add rate limiting.** No rate limiting. Add in-memory limiter (e.g., 100 req/min/IP). Done when excessive requests return 429.
-- [ ] **Remove dead `sql_display()` helper in `project-tools/db-healthcheck.sh`.** Defined ~line 181 (after the TTY/color fix, the live paths are `check_pg_ready`/`sql_value`); grep shows only the definition, never a call. Done when the function is removed and the suite still passes 8/8. (2026-10-08, found during `fix/dev-db-healthcheck-tty-hang-colors`)
+- [x] **Remove dead `sql_display()` helper in `project-tools/db-healthcheck.sh`.** Defined ~line 181 (after the TTY/color fix, the live paths are `check_pg_ready`/`sql_value`); grep shows only the definition, never a call. Done when the function is removed and the suite still passes 8/8. Verified: helper (comment + function) deleted; `bash -n` clean; `grep sql_display` in the script → no matches (remaining refs are historical FTD records); full suite against the live stack → **8/8 checks passed**, exit 0. FTD: `02-DOCS/wiki/ftd/db-healthcheck-remove-sql-display.md`. (2026-10-10 via `chore/dev-remove-dead-sql-display`, issue #41)
 
 ## Backlog maintenance
 
