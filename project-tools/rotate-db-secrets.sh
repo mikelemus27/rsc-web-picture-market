@@ -39,7 +39,11 @@ BACKEND_SERVICE="${BACKEND_SERVICE:-backend}"
 DB_NAME="${DB_NAME:-wpm_db}"
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
-HEALTH_URL="${HEALTH_URL:-http://localhost:4001/health}"
+# Backend HTTP port. The single source is the root .env (written by
+# write_env_file below); the compose mapping and the local test runner derive
+# from the same value via container-management.sh.
+PORT="${PORT:-4001}"
+HEALTH_URL="${HEALTH_URL:-http://localhost:${PORT}/health}"
 
 COMPOSE_CMD=""
 
@@ -177,6 +181,7 @@ DB_USER=$1
 DB_PASSWORD=$2
 DB_NAME=$DB_NAME
 DB_PORT=$DB_PORT
+PORT=$PORT
 EOF
   mv "$ENV_FILE.tmp" "$ENV_FILE"
   chmod 600 "$ENV_FILE"
