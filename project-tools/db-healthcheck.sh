@@ -189,12 +189,6 @@ sql_value() {
     psql -U "$DB_USER" -d "$DB_NAME" -q -t -A -c "$1" </dev/null 2>/dev/null
 }
 
-# Execute SQL and let psql print its own table output.
-sql_display() {
-  run_guarded $COMPOSE_CMD -f "$COMPOSE_FILE" exec -T "$DB_SERVICE" \
-    psql -U "$DB_USER" -d "$DB_NAME" -c "$1"
-}
-
 # ---------------------------------------------------------------------------
 # Health checks. Each returns 0 to pass, 1 to fail, and prints its own detail.
 # ---------------------------------------------------------------------------
