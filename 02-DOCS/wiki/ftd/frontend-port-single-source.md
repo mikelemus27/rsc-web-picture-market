@@ -58,19 +58,20 @@ fallback remains.
 
 ## Tasks
 
-- [ ] T1 — Add `src/core/config/apiConfig.ts`; route the six `src/*.ts` and
+- [x] T1 — Add `src/core/config/apiConfig.ts`; route the six `src/*.ts` and
   `src/users/tests/InvalidRouteTest.ts` through it. Done when no `"http://localhost:4001"`
-  literal remains under `_02_rsc_wp_frontend/src`.
-- [ ] T2 — Route `tests/usuarios.frontend.api.test.ts` through `apiBaseUrl()`.
-  Done when the file has no literal `4001` fallback and still validates the protocol.
-- [ ] T3 — Compose (dev + prod): add `environment:` `PORT`/`API_HOST`, drop
+  literal remains under `_02_rsc_wp_frontend/src`. — done: the only `4001` left is the
+  helper's `DEFAULT_API_PORT`; every `http://localhost:4001` literal is gone.
+- [x] T2 — Route `tests/usuarios.frontend.api.test.ts` through `apiBaseUrl()`.
+  Done when the file has no literal `4001` fallback and still validates the protocol. — done.
+- [x] T3 — Compose (dev + prod): add `environment:` `PORT`/`API_HOST`, drop
   `env_file: .env`; delete the local frontend `.env`. Done when
-  `PORT=5055 docker compose -f … config` shows `PORT: "5055"` in the frontend env.
-- [ ] T4 — `container-management.sh` fallback injects `PORT`/`API_HOST`; help text
-  stops naming `4001`. Done when `sh -n` is clean and `test-frontend` still passes.
-- [ ] T5 — `Dockerfile` `EXPOSE` removed; `FrontEnd_README.md` + root `README.md`
-  updated; `TODO.md` item → Completed. Done when `grep 4001` in the frontend source,
-  compose and Dockerfile returns nothing beyond the helper's one default.
+  `PORT=5055 docker compose -f … config` shows `PORT: "5055"` in the frontend env. — done.
+- [x] T4 — `container-management.sh` fallback injects `PORT`/`API_HOST`; help text
+  stops naming `4001`. Done when `sh -n` is clean and `test-frontend` still passes. — done.
+- [x] T5 — `Dockerfile` `EXPOSE` removed; `FrontEnd_README.md` + root `README.md`
+  updated; `TODO.md` item → Completed. — done (the dated "Onboarding 2026-09-30"
+  snapshot was deliberately left untouched).
 
 ## Verification (canonical)
 
@@ -84,9 +85,32 @@ fallback remains.
 
 ## Evidence
 
-_To be filled with observed results per task._
+Observed on branch `refactor/dev-frontend-port-single-source` (`dev` @ `19b34fb`).
+
+Commits: `22ae070` (shared helper + call sites), `022093c` (Compose dev+prod, management script, Dockerfile); this README/FTD/TODO record is the head commit of the branch.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Typecheck | `cd _02_rsc_wp_frontend && bunx tsc --noEmit` | exit 0, no output |
+| Interpolation (default) | `docker compose -f _02_rsc_wp_frontend/docker-compose.yml config` | frontend env `API_HOST: 01_rsc_wpm_bun_psgres-backend`, `PORT: "4001"`; **no** `env_file` |
+| Interpolation (override) | `PORT=5055 docker compose -f … config` | frontend env `PORT: "5055"` |
+| Frontend suite | `./project-tools/container-management.sh test-frontend` | **11 pass / 0 fail**, 28 `expect()` calls; every case resolved to `http://01_rsc_wpm_bun_psgres-backend:4001`, proving the target comes from the injected `PORT`/`API_HOST` |
+| Script syntax | `sh -n project-tools/container-management.sh` | exit 0 |
+| Literal scan | `grep -rn "4001" _02_rsc_wp_frontend/src …yml …prod.yml …Dockerfile` | 3 hits, all intentional: `DEFAULT_API_PORT` in the helper + `${PORT:-4001}` in each Compose file (the documented default, mirroring the backend) |
+
+Notes from the run:
+
+- The `grep` task wording ("nothing beyond the helper's one default") was imprecise: the
+  `${PORT:-4001}` Compose default in each file is required by the design (and is what makes the
+  `docker compose config` default case show `PORT: "4001"`), so it is a documented default rather
+  than a scattered fallback. The six `http://localhost:4001` literals are all gone.
+- `docker compose -f _02_rsc_wp_frontend/docker-compose.prod.yml config` **fails** with
+  `service "frontend" refers to undefined network rsc-network`. Verified pre-existing on `dev`
+  (the file never declared a top-level `networks:` block); out of scope here and backlogged in
+  `TODO.md`.
 
 ## Next step
 
-Implement T1–T5 on `refactor/dev-frontend-port-single-source`, verify, then open a
-PR targeting `dev` (issue #48). The user merges.
+Commit the change as work-unit commits, run the native review, push
+`refactor/dev-frontend-port-single-source` and open a PR targeting `dev` (issue #48).
+The user merges.
