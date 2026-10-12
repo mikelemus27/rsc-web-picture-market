@@ -16,8 +16,7 @@ COPY src/ ./src
 # Install only production dependencies to minimize image size and keep the container focused on runtime behavior.
 RUN bun install --production
 
-# Expose the application port so the container can receive traffic from the host or from other project services.
-EXPOSE 4001
+# This image is a one-shot CLI test client: it listens on no port, so it exposes none.
 
 # Optional test command kept as a commented example for local validation.
 # This can be uncommented when running frontend tests inside the container.
