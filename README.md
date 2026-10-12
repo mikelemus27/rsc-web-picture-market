@@ -48,7 +48,7 @@ Start the backend and database first. These suites independently exercise the AP
 ./project-tools/container-management.sh test-frontend
 ```
 
-The backend suite targets `http://localhost:4001` from inside the backend container. The frontend suite uses `API_URL` from `_02_rsc_wp_frontend/.env` to reach the backend over the Compose network. A configured URL is not replaced with localhost if unreachable, so the frontend run will fail when its network route is broken.
+The backend suite targets `http://localhost:4001` from inside the backend container. The frontend suite derives its target from the root `./.env` `PORT` single source, injected as `PORT`/`API_HOST` by `_02_rsc_wp_frontend/docker-compose.yml` to reach the backend over the Compose network. An explicit `API_URL` remains a full override, and an unreachable target fails rather than silently falling back to localhost.
 
 To run backend unit and API tests locally instead, from the backend directory run:
 
@@ -64,7 +64,7 @@ The frontend also has a CLI workflow suite that exercises the API through the fr
 cd _02_rsc_wp_frontend && API_URL=http://localhost:4001 bun run test:suite
 ```
 
-It provisions its own user and uses the returned id, so it does not depend on pre-existing rows. Override `API_URL` because `_02_rsc_wp_frontend/.env` points at the compose-internal hostname, which only resolves inside the Docker network.
+It provisions its own user and uses the returned id, so it does not depend on pre-existing rows. Set `API_URL` for a local run because the default target uses the root `./.env` `PORT` and the Compose-internal host (`API_HOST`), which only resolves inside the Docker network.
 
 The frontend test container needs network access to the running backend. These commands test API contracts; they do not render or launch a browser-based storefront.
 
