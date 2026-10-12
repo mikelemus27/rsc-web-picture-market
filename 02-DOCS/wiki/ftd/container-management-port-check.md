@@ -44,8 +44,11 @@ Out:
 | --- | --- | --- |
 | Source port read (root `.env`), or the `4001` fallback when the file is absent | the port and which of the two it is | — |
 | Backend running; published host port **and** env `PORT` both equal the source | a match line per value | **0** |
-| Backend running; either value differs | both values side by side, a `mismatch` line, and the exact recreate command | **1** |
+| Backend running; either of those values differs | both values side by side, a `mismatch` line, and the exact recreate command | **1** |
+| A frontend container exists and its `PORT` differs from the source | a `mismatch` line naming the frontend value, plus the recreate command | **1** |
+| A frontend container exists and its `PORT` matches | a match line for it | **0** |
 | No backend container exists | "nothing running to check" | **0** |
+| No frontend container exists | a "nothing to compare" note — **not** drift | **0** |
 | Docker unreachable, or compose fails | docker's own error, reported as a tool failure — never as "not running" | **1** |
 
 **Read-only is the contract.** `check-ports` must not write a file, and must not reach `up`, `run`,
@@ -73,9 +76,11 @@ too.
       script and pass against the changed one.
       **proof:** `sh project-tools/tests/container-management.test.sh <pre-change script>` exits
       non-zero naming the new cases; against the changed script it exits 0.
-- [x] T4 read-only guarantee: with a stub `docker` on `PATH` logging every invocation, `check-ports`
-      reaches only inspection verbs.
-      **proof:** the captured stub log contains no mutating verb.
+- [x] Read-only guarantee: with a stub `docker` on `PATH` logging every invocation, `check-ports`
+      reaches only inspection verbs on **both** the match path and the mismatch path.
+      **proof:** the captured stub log contains no mutating verb on either path, and the gate is
+      proven to have teeth — injecting `docker compose … up -d --force-recreate` into the mismatch
+      branch makes it fail, naming `up`.
 - [x] T5 `TODO.md` item closed with evidence, and this document records the observed results.
 
 ## Evidence
@@ -112,17 +117,25 @@ the documented fallback constant in the port block, which the single-source rule
 
 **T4 — RED first, then green.** The pre-change script was saved with
 `git show HEAD:project-tools/container-management.sh > /tmp/opencode/cm-pre.sh`.
-`sh project-tools/tests/container-management.test.sh /tmp/opencode/cm-pre.sh` → **16 of 39
-assertions FAILED**, exit 1, naming the new cases (14, 15, 16, 17, 20, 21, 23, 24, 26, 29, 30, 32,
-34, 35, 36, 38). Against the changed script the same harness → **All 39 assertions passed**, exit 0
+`sh project-tools/tests/container-management.test.sh /tmp/opencode/cm-pre.sh` → **16 of 40
+assertions FAILED**, exit 1, naming the new cases (14, 15, 16, 17, 20, 21, 24, 25, 27, 30, 31, 33,
+35, 36, 37, 39). Against the changed script the same harness → **All 40 assertions passed**, exit 0
 (the 13 pre-existing assertions stayed green). The general invariant (`every action named in usage
-has a case arm`) is what failed as assertion 38 pre-change, naming `restart-frontend`.
+has a case arm`) is what failed as assertion 39 pre-change, naming `restart-frontend`.
 
-**T4 — read-only guarantee.** In the harness the stub `docker` logs every argv element as an `ARG
-<element>` line. For the `check-ports` match probe the log contains `ARG inspect`, `ARG port` and
-`docker compose … ps` and no line equal to `up`, `run`, `rm`, `create`, `start`, `stop`, `restart`,
-`build`, `rmi` or `exec`; and the copied `project-tools/` tree hashed (`cksum`) identical before and
-after. Mutating verbs are asserted as whole argv elements, so a file path containing e.g. "run"
-cannot produce a false pass or fail.
+**T4 — read-only guarantee, on both paths.** In the harness the stub `docker` logs every argv element
+as an `ARG <element>` line. For the `check-ports` match probe (run with a frontend container present,
+so the frontend's read path executes too) and again for the mismatch probe, the log contains `ARG
+inspect`, `ARG port` and `docker compose … ps`, and no line equal to `up`, `run`, `rm`, `create`,
+`start`, `stop`, `restart`, `build`, `rmi` or `exec`; and the copied `project-tools/` tree hashed
+(`cksum`) identical before and after. Mutating verbs are asserted as whole argv elements, so a file
+path containing e.g. "run" cannot produce a false pass or fail.
+
+**T4 — the read-only gate is proven to have teeth.** A gate that cannot fail is theatre. Injecting the
+exact regression it exists to catch — `docker compose -f "$BACKEND_COMPOSE" up -d --force-recreate`
+added to the mismatch branch, i.e. `check-ports` "helpfully" repairing what it found — makes the
+harness fail: `FAIL 23 - check-ports reached mutating docker verb(s) (mismatch path): up`, **1 of 40
+assertions FAILED**, exit 1. The mutated copy was a throwaway under `/tmp/opencode`; the real script
+was never touched.
 
 **T5 — records.** `TODO.md` carries a completed issue #50 item with the evidence above.
