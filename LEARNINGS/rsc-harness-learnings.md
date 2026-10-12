@@ -4,7 +4,7 @@ Project: `rsc-web-picture-market` — rsc-harness (`@ericrisco/rsc`) orchestrati
 
 Use this as an operational reference for how the rsc harness is installed, versioned, updated and repaired in this project. Verify current versions and `.rsc.json` before copying commands; the harness changes with every release.
 
-Sources: official README of the installed package (`@ericrisco/rsc` 3.0.12), GitHub releases of `ericrisco/rsc-harness`, and hands-on experience upgrading this repo 2.0.15 → 3.0.12 (2026-10-09).
+Sources: official README of the installed package (`@ericrisco/rsc`, 3.0.12 → **3.0.22**), GitHub releases of `ericrisco/rsc-harness`, and hands-on experience upgrading this repo 2.0.15 → 3.0.12 (2026-10-09) then 3.0.12 → 3.0.22 via background same-major updates (2026-10-11).
 
 ## 1. What rsc-harness is
 
@@ -27,7 +27,8 @@ The unit of installation is **one skill**. Real skill files are written once to 
 | `.rsc.json` | The decision: which assistants (`targets`), which skills, **which catalog version** (`catalogVersion`), the tier, which gates you disarmed (`optOuts`), `agents`, `ownSkills`, `onboarding`, `version` |
 | `01-TOOLS/` · `02-DOCS/` | Your tooling and your wiki (chaos → knowledge: `inbox/` → `raw/` → wiki; OKF-conformant markdown, also an Obsidian vault) |
 | Skills and agents you wrote by hand | Yours. rsc does not claim, count as drift, or touch them |
-| `.claude/settings.json`, `.claude/rsc-bootstrap.mjs`, `AGENTS.md` (+ `GEMINI.md`, `CONVENTIONS.md`, `.github/copilot-instructions.md` on multi-target repos) | The wiring and the injected always-on layer |
+| `.claude/rsc-bootstrap.mjs`, `AGENTS.md` (+ `GEMINI.md`, `CONVENTIONS.md`, `.github/copilot-instructions.md` on multi-target repos) | The wiring and the injected always-on layer |
+| `.claude/settings.json` | rsc's own `.gitignore` **intends** this tracked — it holds the Claude Code hook wiring and the git-permissions allow list. **In this repo we deliberately do NOT track it** (solo-dev decision, §2.2). `.claude/settings.local.json` is local by name and never tracked |
 
 **Do not commit (rsc adds them to `.gitignore`):**
 
@@ -36,6 +37,25 @@ The unit of installation is **one skill**. Real skill files are written once to 
 | `.rsc/` | Machine state: hook scripts, seals, logs, fallback memory, backups, `.version`, `.base-versions.json` |
 | `.worktrees/` | Isolation worktrees for parallel sessions |
 | The per-assistant skill links (`.claude/skills/`, `.opencode/agents/`, …) | Symlinks vs copies — machine-local shape |
+
+### 2.1 `.mjs` and `rsc-bootstrap.mjs`
+
+**`.mjs` = ES Module, forced.** `.js` is ambiguous — Node decides by the nearest `package.json` `"type"` field. `.mjs` removes the ambiguity and tells Node "parse this as ESM no matter what"; `.cjs` is the mirror image ("always CommonJS"). Same JavaScript language, different module semantics. It matters here because `rsc-bootstrap.mjs` is dropped into *any* host repo — one whose `package.json` may declare `"type": "commonjs"` or may not exist at all — so its top-level `import { existsSync } from 'node:fs'` must always parse.
+
+**`rsc-bootstrap.mjs` is the one piece of the harness that travels in git.** `.rsc/` cannot travel: its contents are symlinks on one OS and real copies on another, so committing either shape breaks the other. rsc's response is to point the committed hook wiring at this committed shim, which then decides:
+
+1. **Harness mounted** → delegate to the real script inside `.rsc/` and print *nothing*. The healthy case is almost everyone, every session, so it must cost zero bytes of context (one `existsSync`, no output).
+2. **Harness not mounted** → say what is wrong as a *symptom*, name what `npx @ericrisco/rsc@<catalogVersion> sync` would install, ask once, and block nothing.
+
+It never throws (a crash would make a safety guard indistinguishable from an allow) and fails open on the exit code, but reports a genuine crash on stderr rather than swallowing it.
+
+### 2.2 The `.claude/settings.json` pairing, and the solo-dev decision
+
+The bootstrap is only useful because `.claude/settings.json` references it in every hook (`SessionStart`, `PreToolUse`, `Stop`, …). **The two are a pair**: if `settings.json` is not committed, the hook wiring does not travel, so a fresh clone has no hooks at all and the bootstrap is never invoked — the "a clone is told the harness is missing" behaviour is dead.
+
+- rsc's generated `.gitignore` therefore un-ignores **both** `!.claude/rsc-bootstrap.mjs` and `!.claude/settings.json`.
+- **This repo (2026-10-11, solo dev): we deliberately untracked `settings.json` and ignored it.** Rationale: there are no clones, and editor-local hook wiring is machine state, not project state. Accepted consequence: the clone-notice mechanism is disabled here. If a clone ever needs the harness, restore `!.claude/settings.json` in `.gitignore`, commit the file, and commit the `rsc-bootstrap.mjs` alongside it.
+- `.claude/settings.local.json` is local by name (session-memory hooks) and is never tracked.
 
 A clone runs one command to get the exact harness the project pinned — **never `@latest`**:
 
@@ -117,12 +137,13 @@ rsc restore <snapshot-id>      # restore it
 
 Other maintenance commands: `rsc agents status` (which agents you edited), `rsc agents reset <agent>` (take rsc's version; yours is backed up first), `rsc doctor` (harness health vs onboarding readiness — exit code follows health only), `rsc repair --dry-run` (fixes only what was already declared; asks before anything that changes a decision; never touches hand-written skills), `rsc reassess` (check deferral triggers, never installs), `rsc memory status|save|resume|off|on`, `rsc review consolidate`, `rsc add <id>`, `rsc consult "<task>"` (lexical recommendation only — never decides; silence ≠ "no skill exists"), `rsc capabilities`, `rsc list`, `rsc agent-model opencode <model>`.
 
-### Gotchas learned in the field (this repo, 2.0.15 → 3.0.12)
+### Gotchas learned in the field (this repo, 2.0.15 → 3.0.22)
 
 - `rsc upgrade` **only prints the guide** — it does not execute anything. Run the two commands yourself.
 - After `npm install -g`, the CLI reports `installed in this project: 2.0.15 (behind)` until you run `rsc sync` in the repo. `catalogVersion` in `.rsc.json` and `.rsc/.version` must both move to the new version.
 - The sync modifies tracked files: `AGENTS.md`, `GEMINI.md`, `CONVENTIONS.md`, `.github/copilot-instructions.md`, `.gitignore`, `.rsc.json`, `.github/rsc/.rsc-state.json` — and **rsc never commits them for you** (deliberate: the git decision stays human). They show up as ` M` (modified, unstaged) in `git status` — what that state means and how to park/discard it: see `git-github-gh-commands-best-practices.md` §35. Leaving them uncommitted is the main post-upgrade cleanup task.
 - **Same-major updates install themselves in the background**: a newer 3.0.x appeared mid-session (3.0.12 → 3.0.18) and re-synced the managed files without asking (only a new major asks). Stash the resulting churn with a message and decide separately — it must not ride inside a feature PR.
+- The background updates kept coming: by 2026-10-11 the committed state had moved to **3.0.22** (`.rsc.json catalogVersion`, `.github/rsc/.rsc-state.json` `version`, `.rsc/.version` all agree). The churn landed as plain working-tree modifications to `.rsc.json`, `.github/rsc/.rsc-state.json`, and `.gitignore` — **rsc never commits them** (the git decision stays human, §6). In this repo the clean-up was committed directly on `dev` as config, not folded into a feature PR.
 - The 3.x catalog retired three skills (merged into others): `eli5` and `show-me` became part of `orient`, `bro` became part of `unslop`; the sync removes the old copies it installed (we saw `.github/rsc/{bro,eli5,show-me}` deleted).
 - `rsc sync` preserves your edited agents (e.g. `refuter-correctness`, `refuter-security`, `refuter-tests` in `.opencode/agents/`) and prints how to take the official version (`rsc agents reset <agent>`).
 - In this repo the long-term session memory is **Engram (MCP)**, which is separate from rsc's own local session journal (30 days, ≤4096 bytes, git-excluded, no network). Do not confuse the two.
@@ -131,6 +152,6 @@ Other maintenance commands: `rsc agents status` (which agents you edited), `rsc 
 ## 7. This project's harness at a glance
 
 - Targets (18): `aider,amp,antigravity,claude,cline,codex,continue,copilot,cursor,gemini,jules,junie,kiro,opencode,roo,windsurf,zed` + `deepseek` (18th, via `dsh`).
-- Version: `3.0.12` (CLI global, `.rsc/.version`, `.rsc.json catalogVersion`) — was `2.0.15` before the 2026-10-09 upgrade.
-- Working flow: PRs target `dev`; trivial docs-only changes commit directly on `dev` (no issue/branch/PR); the harness update itself is pending a commit decision.
+- Version: `3.0.22` (CLI global, `.rsc/.version`, `.rsc.json catalogVersion`) — was `2.0.15` before the 2026-10-09 upgrade, then `3.0.12`/`3.0.18` via background same-major updates.
+- Working flow: PRs target `dev`; trivial docs-only changes commit directly on `dev` (no issue/branch/PR). The harness config update (3.0.18 → 3.0.22) and the `.claude/` tracking decision were committed directly on `dev` on 2026-10-11 (`449cf77`, `d918aee`).
 - Session memory: Engram MCP, project-scoped (`mem_save` / `mem_search` / `mem_session_summary`).
