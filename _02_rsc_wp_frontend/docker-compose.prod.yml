@@ -8,8 +8,13 @@ services:
     build: .
     # Use a fixed container name so the running instance is easy to identify and manage with Docker commands.
     container_name: 02_rsc_wp_bun_vue_frontend
-    # Load environment variables from the local .env file so runtime config is kept outside the image.
-    env_file: .env
+    # Backend port: single source is the root ./.env PORT. container-management.sh
+    # exports it, and Compose interpolates ${PORT} here (env_file cannot). The host
+    # is the backend container name on the shared Compose network; the frontend's
+    # own localhost is itself, so the host is named explicitly.
+    environment:
+      PORT: ${PORT:-4001}
+      API_HOST: 01_rsc_wpm_bun_psgres-backend
     # Attach the container to the shared project network so it can discover and communicate with other services such as the backend.
     networks:
       - rsc-network

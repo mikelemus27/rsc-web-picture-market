@@ -11,8 +11,13 @@ services:
     container_name: 02_rsc_wp_bun_vue_frontend
     # Ensure the container restarts automatically if it stops unexpectedly, which helps keep the frontend available during development.
     restart: "no"
-    # Load variables from the .env file so the app can access configuration like ports, API URLs, and secrets without hardcoding them.
-    env_file: .env
+    # Backend port: single source is the root ./.env PORT. container-management.sh
+    # exports it, and Compose interpolates ${PORT} here (env_file cannot). The host
+    # is the backend container name on the shared Compose network; the frontend's
+    # own localhost is itself, so the host is named explicitly.
+    environment:
+      PORT: ${PORT:-4001}
+      API_HOST: 01_rsc_wpm_bun_psgres-backend
     # Mount the current project directory into /app inside the container.
     # This keeps the container in sync with local source files so changes made on the host are immediately available in the app.
     volumes:

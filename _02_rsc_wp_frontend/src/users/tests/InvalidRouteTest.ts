@@ -3,6 +3,9 @@ from "../interfaces/ITest";
 
 import type { TTestResult } from "../../core/types/TTestResult";
 
+import { apiBaseUrl }
+from "../../core/config/apiConfig";
+
 export class InvalidRouteTest
 implements ITest {
 
@@ -11,7 +14,7 @@ implements ITest {
 
     const response =
       await fetch(
-        "http://localhost:4001/ruta-inexistente"
+        `${apiBaseUrl()}/ruta-inexistente`
       );
 
     const data =
