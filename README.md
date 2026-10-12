@@ -149,4 +149,6 @@ project-tools/               # Container lifecycle, database health checks, and 
 | [`Docker/container learnings`](LEARNINGS/docker-microservices-containers-learnings.md) | Compose networking, test execution, and container troubleshooting. |
 | [`Git/GitHub learnings`](LEARNINGS/git-github-gh-commands-best-practices.md) | Branch, issue, and pull request practices. |
 | [`New project structure and security practices`](LEARNINGS/new-projects-structure-n-secure-bests-practices.md) | Project layout conventions and security practices. |
+| [`gentle-ai and RDD learnings`](LEARNINGS/gentle-ai-rdd-learnings.md) | Gentle AI command surface, receipt-driven development internals, and where its review refuses. |
+| [`rsc harness learnings`](LEARNINGS/rsc-harness-learnings.md) | rsc-harness install, versioning, harness split, and update/repair model. |
 | [`TODO.md`](TODO.md) | Persistent repository backlog shared across contributors, agents, and sessions. |
