@@ -238,7 +238,7 @@
     "verify"
   ],
   "commandCollisions": [],
-  "version": "3.0.18",
+  "version": "3.0.22",
   "ignoreEntriesAdded": [
     ".github/agents/developer.agent.md",
     ".github/agents/finding-verifier.agent.md",
