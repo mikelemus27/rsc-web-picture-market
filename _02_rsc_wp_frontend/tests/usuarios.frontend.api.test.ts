@@ -8,11 +8,14 @@
 */
 import { describe, test, expect } from "bun:test";
 
-// Use localhost only when no API_URL was configured, as in a local test run.
-const LOCAL_BASE_URL = "http://localhost:4001";
-// Remove surrounding whitespace and trailing slashes so endpoint paths can be appended consistently.
-const CONFIGURED_BASE_URL = process.env.API_URL?.trim().replace(/\/+$/, "");
-const BASE_URL = CONFIGURED_BASE_URL || LOCAL_BASE_URL;
+import { apiBaseUrl }
+from "../src/core/config/apiConfig";
+
+// The base URL comes from the shared helper: by default it derives from the root
+// ./.env PORT single source (injected as PORT/API_HOST), while an explicit
+// API_URL remains a full override; a bare local run falls back to localhost.
+const BASE_URL = apiBaseUrl();
+// Validate the resolved protocol so endpoint paths can be appended consistently.
 const parsedBaseUrl = new URL(BASE_URL);
 if (parsedBaseUrl.protocol !== "http:" && parsedBaseUrl.protocol !== "https:") {
   throw new Error("API_URL must use http:// or https://");

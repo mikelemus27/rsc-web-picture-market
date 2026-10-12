@@ -9,6 +9,8 @@ import { UpdateUsuarioTest } from "./users/tests/UpdateUsuarioTest";
 import { InvalidRouteTest } from "./users/tests/InvalidRouteTest";
 import { TestRunner } from "./app/TestRunner";
 import { SummaryReporter } from "./app/SummaryReporter";
+import { apiBaseUrl }
+from "./core/config/apiConfig";
 
 /*
 ==================================================
@@ -28,7 +30,7 @@ const tablePrinter =
 const apiService =
   new UsuarioApiService(
     httpClient,
-    process.env.API_URL || "http://localhost:4001"
+    apiBaseUrl()
   );
 
 /*

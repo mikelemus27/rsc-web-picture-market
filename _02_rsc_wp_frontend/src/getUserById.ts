@@ -2,6 +2,8 @@ import { HttpClient } from "./core/http/HttpClient";
 import { ConsolePrinter } from "./core/console/ConsolePrinter";
 import { UsuarioApiService } from "./users/services/UsuarioApiService";
 import { GetUserByIDTest } from "./users/tests/GetUserByIDTest";
+import { apiBaseUrl }
+from "./core/config/apiConfig";
 
 /*
 ==================================================
@@ -18,7 +20,7 @@ const consolePrinter =
 const apiService =
   new UsuarioApiService(
     httpClient,
-    process.env.API_URL || "http://localhost:4001"
+    apiBaseUrl()
   );
 
 /*

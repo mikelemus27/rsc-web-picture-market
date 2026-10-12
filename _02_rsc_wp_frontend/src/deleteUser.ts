@@ -3,6 +3,8 @@ import { ConsolePrinter } from "./core/console/ConsolePrinter";
 import { TablePrinter } from "./core/console/TablePrinter";
 import { UsuarioApiService } from "./users/services/UsuarioApiService";
 import { DeleteUsuarioTest } from "./users/tests/DeleteUsuarioTest";
+import { apiBaseUrl }
+from "./core/config/apiConfig";
 
 /*
 ==================================================
@@ -22,7 +24,7 @@ const tablePrinter =
 const apiService =
   new UsuarioApiService(
     httpClient,
-    process.env.API_URL || "http://localhost:4001"
+    apiBaseUrl()
   );
 
 /*
