@@ -22,8 +22,11 @@ In — exactly five tasks:
 - **T2** `restart-frontend`: advertised in `usage` but with no `case` arm, so it falls through to the
   catch-all and prints `Unknown action: restart-frontend`. Implement it as "recreate the frontend
   container against the running backend".
-- **T3** Remove the hardcoded `4001` from the help text and comments: the port is configurable, so
-  those strings are false whenever `PORT` is not `4001`.
+- **T3** Remove the misleading hardcoded `4001` from the help text and comments: the port is
+  configurable, so those strings are false whenever `PORT` is not `4001`. **Already satisfied at the
+  base:** `022093c` (PR #49) had already changed all three strings to `${PORT}` before this change
+  started, so T3 needed no edit here. The evidence below records that, together with the three
+  `4001` occurrences that remain by design.
 - **T4** Harness cases in `project-tools/tests/container-management.test.sh` covering T1, T2 and T3,
   including a **read-only guarantee** that fails if T1 ever reaches a mutating docker verb.
 - **T5** Record the observed evidence here and close the `TODO.md` item.
@@ -70,8 +73,12 @@ too.
 - [x] T2 `restart-frontend` has a real `case` arm and no longer prints `Unknown action`.
       **proof:** `sh project-tools/container-management.sh restart-frontend` recreates the frontend
       and `verify_stack` reports it; the string never appears in the output.
-- [x] T3 no hardcoded `4001` remains in the help text or comments.
-      **proof:** `sh project-tools/container-management.sh help | grep -c 4001` → `0`.
+- [x] T3 the misleading hardcoded `4001` is gone from the help text and from the two comments that
+      named the configured port.
+      **proof:** `sh project-tools/container-management.sh help | grep -c 4001` → `0`, and those
+      three strings were already `${PORT}` at the base. The three `4001` occurrences that remain are
+      the fallback pair plus the new `docker port` format example — none of them asserts the
+      configured port; the evidence below names the exact lines.
 - [x] T4 harness cases added and **RED first**: the new assertions fail against the pre-change
       script and pass against the changed one.
       **proof:** `sh project-tools/tests/container-management.test.sh <pre-change script>` exits
@@ -109,11 +116,15 @@ source)` and `✅ no drift` → exit 0. So the live stack reproduced both row 3 
 `Unknown action: restart-frontend` never appeared. The harness additionally runs it under the stub
 `docker` and asserts the log contains `ARG --force-recreate`.
 
-**T3 — no hardcoded port in help/comments.** `sh project-tools/container-management.sh help | grep
--c 4001` → `0`. Note: the three historical strings (the `restart-frontend` usage line, the comment
-above `check_backend_running`, the `test-frontend` comment) were already changed to `${PORT}` by
-commit `022093c` (PR #49), so no further edit was needed; the only remaining `4001` in the file is
-the documented fallback constant in the port block, which the single-source rule requires.
+**T3 — no misleading hardcoded port in help/comments.** `sh project-tools/container-management.sh
+help | grep -c 4001` → `0`. Note: the three historical strings (the `restart-frontend` usage line,
+the comment above `check_backend_running`, the `test-frontend` comment) were already changed to
+`${PORT}` by commit `022093c` (PR #49), so no further edit was needed here. `grep -c 4001
+project-tools/container-management.sh` → `3`, and all three are by design: the fallback commentary
+(line 26) and the fallback constant (line 32) in the port block, which the single-source rule
+requires, plus the `docker port` output-shape example added by this change (line 239, e.g.
+`4001/tcp -> 0.0.0.0:4001`) — an illustration of the format, not a claim about the configured port.
+Only the first two predate this change.
 
 **T4 — RED first, then green.** The pre-change script was saved with
 `git show HEAD:project-tools/container-management.sh > /tmp/opencode/cm-pre.sh`.
