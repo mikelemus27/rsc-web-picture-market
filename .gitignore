@@ -800,4 +800,4 @@
 !.claude/
 .claude/*
 !.claude/rsc-bootstrap.mjs
-!.claude/settings.json
+# !.claude/settings.json  (editor-local, do not track)
