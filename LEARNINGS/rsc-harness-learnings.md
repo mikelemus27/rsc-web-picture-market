@@ -28,7 +28,7 @@ The unit of installation is **one skill**. Real skill files are written once to 
 | `01-TOOLS/` · `02-DOCS/` | Your tooling and your wiki (chaos → knowledge: `inbox/` → `raw/` → wiki; OKF-conformant markdown, also an Obsidian vault) |
 | Skills and agents you wrote by hand | Yours. rsc does not claim, count as drift, or touch them |
 | `.claude/rsc-bootstrap.mjs`, `AGENTS.md` (+ `GEMINI.md`, `CONVENTIONS.md`, `.github/copilot-instructions.md` on multi-target repos) | The wiring and the injected always-on layer |
-| `.claude/settings.json` | rsc's own `.gitignore` **intends** this tracked — it holds the Claude Code hook wiring and the git-permissions allow list. **In this repo we deliberately do NOT track it** (solo-dev decision, §2.2). `.claude/settings.local.json` is local by name and never tracked |
+| `.claude/settings.json` | Tracked (as rsc intends): the Claude Code hook wiring and the git-permissions allow list. It is the pair of `rsc-bootstrap.mjs` — see §2.2. `.claude/settings.local.json` is local by name (session-memory hooks) and is never tracked |
 
 **Do not commit (rsc adds them to `.gitignore`):**
 
@@ -49,13 +49,14 @@ The unit of installation is **one skill**. Real skill files are written once to 
 
 It never throws (a crash would make a safety guard indistinguishable from an allow) and fails open on the exit code, but reports a genuine crash on stderr rather than swallowing it.
 
-### 2.2 The `.claude/settings.json` pairing, and the solo-dev decision
+### 2.2 The `.claude/settings.json` pairing
 
 The bootstrap is only useful because `.claude/settings.json` references it in every hook (`SessionStart`, `PreToolUse`, `Stop`, …). **The two are a pair**: if `settings.json` is not committed, the hook wiring does not travel, so a fresh clone has no hooks at all and the bootstrap is never invoked — the "a clone is told the harness is missing" behaviour is dead.
 
-- rsc's generated `.gitignore` therefore un-ignores **both** `!.claude/rsc-bootstrap.mjs` and `!.claude/settings.json`.
-- **This repo (2026-10-11, solo dev): we deliberately untracked `settings.json` and ignored it.** Rationale: there are no clones, and editor-local hook wiring is machine state, not project state. Accepted consequence: the clone-notice mechanism is disabled here. If a clone ever needs the harness, restore `!.claude/settings.json` in `.gitignore`, commit the file, and commit the `rsc-bootstrap.mjs` alongside it.
-- `.claude/settings.local.json` is local by name (session-memory hooks) and is never tracked.
+- rsc's generated `.gitignore` therefore un-ignores **both** `!.claude/rsc-bootstrap.mjs` and `!.claude/settings.json`. Keep both tracked or the pair is broken.
+- **This repo (2026-10-11): `settings.json` is tracked**, to keep the harness functional on any clone. (It was briefly untracked earlier the same day as a "solo dev, no clones" call; that was reverted because it silently disabled the clone-notice mechanism — the wiring is only as good as the file that carries it.)
+- `.claude/settings.local.json` is local by name (session-memory hooks) and is never tracked — rsc does not un-ignore it.
+- If `settings.json` is ever found missing from disk after an edit, recover it with `git show <commit>:.claude/settings.json > .claude/settings.json`, or regenerate the whole wiring with `npx @ericrisco/rsc@<catalogVersion> sync`.
 
 A clone runs one command to get the exact harness the project pinned — **never `@latest`**:
 
@@ -153,5 +154,5 @@ Other maintenance commands: `rsc agents status` (which agents you edited), `rsc 
 
 - Targets (18): `aider,amp,antigravity,claude,cline,codex,continue,copilot,cursor,gemini,jules,junie,kiro,opencode,roo,windsurf,zed` + `deepseek` (18th, via `dsh`).
 - Version: `3.0.22` (CLI global, `.rsc/.version`, `.rsc.json catalogVersion`) — was `2.0.15` before the 2026-10-09 upgrade, then `3.0.12`/`3.0.18` via background same-major updates.
-- Working flow: PRs target `dev`; trivial docs-only changes commit directly on `dev` (no issue/branch/PR). The harness config update (3.0.18 → 3.0.22) and the `.claude/` tracking decision were committed directly on `dev` on 2026-10-11 (`449cf77`, `d918aee`).
+- Working flow: PRs target `dev`; trivial docs-only/config changes commit directly on `dev` (no issue/branch/PR). The harness config update (3.0.18 → 3.0.22) and the `.claude/` wiring (track `rsc-bootstrap.mjs` **and** `settings.json`) were committed directly on `dev` on 2026-10-11.
 - Session memory: Engram MCP, project-scoped (`mem_save` / `mem_search` / `mem_session_summary`).
