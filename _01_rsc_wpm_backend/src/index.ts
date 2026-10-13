@@ -17,6 +17,8 @@ import { UsuarioController }
 from "./infraestructura/adaptadores/input/http/UsuarioController";
 import { handleCreateUsuario } from "./infraestructura/adaptadores/input/http/CreateUsuarioHandler";
 import { handleHealth } from "./infraestructura/adaptadores/input/http/HealthHandler";
+import { createRateLimiter, tooManyRequestsResponse }
+from "./infraestructura/adaptadores/input/http/RateLimiter";
 import { EliminarUsuarioUseCase } from "./aplicacion/caso_uso/usuario/eliminar_usuarios/EliminarUsuarioUseCase";
 import { ActualizarUsuarioUseCase } from "./aplicacion/caso_uso/usuario/actualizar_usuarios/ActualizarUsuarioUseCase";
 import { CrearUsuarioUseCase } from "./aplicacion/caso_uso/usuario/crear_usuario/CrearUsuarioUseCase";
@@ -85,6 +87,22 @@ const usuarioController =
 
 /*
 ==================================================
+RATE LIMITER
+==================================================
+*/
+
+function readPositiveIntEnv(name: string, fallback: number): number {
+  const value = Number(process.env[name]);
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
+const rateLimiter = createRateLimiter({
+  max: readPositiveIntEnv("RATE_LIMIT_MAX_REQUESTS", 100),
+  windowMs: readPositiveIntEnv("RATE_LIMIT_WINDOW_MS", 60_000),
+});
+
+/*
+==================================================
 HELPER JSON RESPONSE
 ==================================================
 */
@@ -129,6 +147,21 @@ const server = Bun.serve({
       const method = req.method;
 
       console.log(`\n${method} ${pathname}`);
+
+      /*
+      ==========================================
+      RATE LIMITER
+      ==========================================
+      */
+
+      if (pathname !== "/health") {
+        const decision =
+          rateLimiter.check(server.requestIP(req)?.address ?? "unknown");
+
+        if (!decision.allowed) {
+          return tooManyRequestsResponse(decision.retryAfterMs);
+        }
+      }
 
       if (pathname === "/health") {
         return handleHealth(method, () => db.query("SELECT 1"));

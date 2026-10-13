@@ -200,6 +200,10 @@ The microservice automatically reads connection parameters from environment vari
 | `DB_PASSWORD` | PostgreSQL database password | `REMOVED` | `REMOVED` |
 | `DB_NAME` | PostgreSQL database name | `escuela` | `escuela` |
 | `PORT` | Microservice listening port | `4001` | `4001` |
+| `RATE_LIMIT_MAX_REQUESTS` | Maximum requests allowed per client IP per window | `100` | `100` |
+| `RATE_LIMIT_WINDOW_MS` | Rate limit window duration in milliseconds | `60000` | `60000` |
+
+Requests above the limit from the same client IP return `429` with `{ error: "Too Many Requests", retryAfterMs }` and a `Retry-After` header; `/health` is exempt from rate limiting.
 
 ---
 
