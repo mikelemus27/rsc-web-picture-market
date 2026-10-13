@@ -16,7 +16,8 @@
     "test:api": "bun test test/usuarios.backend.api.test.ts",
     "test:all": "bun run run-backend-tests.ts",
     "test:full": "TEST_URL=http://localhost:${PORT:-4001} bun test test/usuarios.backend.api.test.ts",
-    "test:tdd": "TEST_URL=http://localhost:${PORT:-4001} bun test test/usuarios.backend.api.test.ts"
+    "test:tdd": "TEST_URL=http://localhost:${PORT:-4001} bun test test/usuarios.backend.api.test.ts",
+    "test:rate-limit": "bunx tsc --noEmit && bun test test/rate-limiter.test.ts test/rate-limit.api.test.ts test/health.test.ts test/create-usuario-handler.test.ts test/server-port.test.ts"
   },
   "dependencies": {
     "pg": "^8.20.0"
