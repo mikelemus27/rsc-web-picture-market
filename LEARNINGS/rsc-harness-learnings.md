@@ -1,8 +1,8 @@
 # rsc harness learnings
 
-Project: `rsc-web-picture-market` — rsc-harness (`@ericrisco/rsc`) orchestrating multiple AI assistant targets in this repository.
+Projects: `rsc-web-picture-market` (original — §1–§7) and `rsc-RocketLandingSimulation` (adopted 2026-10-12 — §8) — rsc-harness (`@ericrisco/rsc`) orchestrating multiple AI assistant targets in these repositories.
 
-Use this as an operational reference for how the rsc harness is installed, versioned, updated and repaired in this project. Verify current versions and `.rsc.json` before copying commands; the harness changes with every release.
+Use this as an operational reference for how the rsc harness is installed, versioned, updated and repaired in these projects. Verify current versions and `.rsc.json` before copying commands; the harness changes with every release. Sections that describe one project name it; everything else is shared.
 
 Sources: official README of the installed package (`@ericrisco/rsc`, 3.0.12 → **3.0.22**), GitHub releases of `ericrisco/rsc-harness`, and hands-on experience upgrading this repo 2.0.15 → 3.0.12 (2026-10-09) then 3.0.12 → 3.0.22 via background same-major updates (2026-10-11).
 
@@ -156,3 +156,142 @@ Other maintenance commands: `rsc agents status` (which agents you edited), `rsc 
 - Version: `3.0.22` (CLI global, `.rsc/.version`, `.rsc.json catalogVersion`) — was `2.0.15` before the 2026-10-09 upgrade, then `3.0.12`/`3.0.18` via background same-major updates.
 - Working flow: PRs target `dev`; trivial docs-only/config changes commit directly on `dev` (no issue/branch/PR). The harness config update (3.0.18 → 3.0.22) and the `.claude/` wiring (track `rsc-bootstrap.mjs` **and** `settings.json`) were committed directly on `dev` on 2026-10-11.
 - Session memory: Engram MCP, project-scoped (`mem_save` / `mem_search` / `mem_session_summary`).
+
+## 8. Field notes from a second project — `rsc-RocketLandingSimulation` (2026-10-12)
+
+This project adopted the harness in a workspace that was **not yet a git repository**. Every rule in §1–§7 assumes `.git/` already exists, so a non-git bootstrap exposes behaviour the earlier sections do not describe. Claims attributed to the package below are quoted from `scripts/install-apply.js` (3.0.22) — note the path: it is `scripts/`, **not** `scripts/lib/`.
+
+### 8.1 Until the folder is a git repo, the harness writes no `.gitignore` at all
+
+`ignoreLocalState()` opens with a hard guard, verbatim:
+
+```js
+if (!existsSync(join(cwd, '.git'))) return null;
+```
+
+So in a workspace with no `.git/`, rsc installs the entire harness and leaves the ignore block unwritten — deliberately. It will not create a `.gitignore` in a directory that is not a git repository.
+
+Measured here *before* `git init`:
+
+| Metric | Value |
+| --- | --- |
+| candidate files git would see | 3,371 |
+| of which `.rsc/backups/` snapshots | 3,038 |
+| workspace size | 617 MB (579 MB of it the project's `.venv`) |
+| root `.gitignore` | **absent** |
+
+**That is the trap.** The harness reports healthy and `rsc doctor` is satisfied, but nothing is excluded — every snapshot the harness itself took sits in plain view of a `git add -A`.
+
+The fix is an *order*, not a file:
+
+```bash
+git init                                   # creates .git/, so the guard stops firing
+npx @ericrisco/rsc@<catalogVersion> sync   # now rsc writes the ignore block
+```
+
+After that pair, the same workspace offered **29 files / 296 KB** to git: the 3,038 backups and the 579 MB venv gone from view. Do not hand-write the `.gitignore` to shortcut this — the block is the harness's to own and it scales with your target list (§8.2).
+
+### 8.2 The block is generated, append-only, and idempotent
+
+The header is a constant in the package:
+
+```
+# rsc local state (hooks, seals, logs) and managed skill links — machine-local
+```
+
+then `.rsc/`, `.worktrees/`, then one entry per managed target × skill/agent/command/prompt. Measured: **440 lines** for this project's 11 targets (header + 2 + 438 managed entries). Spellings are normalised (`.rsc`, `/.rsc` and `.rsc/` are one rule), which is what keeps a re-run idempotent against a `.gitignore` you wrote yourself.
+
+Two entries are in *this* block rather than in git's local exclude, and the source says why:
+
+- **`.worktrees/`** — "Nothing ignored it, so in a teammate's clone it surfaced as `?? .worktrees/` — one `git add -A` from committing a whole checkout. It goes in THIS block, the committed one, so every clone inherits it with its first pull; `.git/info/exclude` would only ever cover the machine that ran the installer."
+- **`.rsc/`** — machine state: hook scripts, seals, logs, fallback memory, backups, plus the automation-gap log, which is prose about what happened in the project. A routine `git add -A` would publish it.
+
+Appending your own lines is safe. rsc removes only *its* block on uninstall — "Lines the user wrote are never part of a block" — and never reorders what it finds. Put yours at the end.
+
+### 8.3 Shared directories are excluded entry by entry — to protect *your* files
+
+`.claude/skills/` and `.cursor/rules/` are shared with you: your own skills and rules live there too. So rsc does not ignore the directory; it ignores the entries it manages, one by one, because excluding the whole directory "would quietly stop versioning their work".
+
+Practical consequence: if you add `.claude/skills/` to `.gitignore` yourself, you silently stop versioning your own skills and nothing warns you.
+
+### 8.4 A clone that "has no agents" is not broken
+
+Subagents, commands and prompts are **catalog content, re-materialised by every install and sync** — the verbatim comment beside the code that ignores them. On disk here:
+
+| Path | On disk | Committed |
+| --- | --- | --- |
+| `.github/agents/` | 5 | 0 |
+| `.github/prompts/` | 13 | 0 |
+| `.opencode/agents/` | 5 | 0 |
+| `.opencode/commands/` | 16 | 0 |
+
+So "my clone has none of the refuters" is expected, not drift: one `rsc sync` rebuilds them. The deeper reason is §2 — the same entry is a symlink on Linux and a real copy on Windows, so committing either shape breaks the other.
+
+### 8.5 Two exclusion layers, two different questions
+
+§2 covers the first layer (`.gitignore`, committed: what *travels*). The second is git's own local exclude, `.git/info/exclude` — **per-clone and never committed**, so it decides what a clone *sees at all*. rsc uses it for machine state that should not need a repo edit to stay private. Observed here:
+
+| Entry | Why it is not even advertised |
+| --- | --- |
+| `.rsc/memory/` | local session journal |
+| `02-DOCS/wiki/harness/user-profile.md` | your technical-level profile — personal, not team knowledge |
+| `.rsc/session-memory*.mjs`, `.rsc/auto-update.mjs`, `.rsc/knowledge-sync.mjs`, `.rsc/trunk-policy.mjs` | hook scripts, machine-local by nature |
+| `.opencode/plugins/rsc-*.js`, `.dsh/hooks.json`, `.cursor/hooks.json`, `.cursor/rules/rsc-memory.mdc` | per-assistant hook wiring |
+
+The decision rule that falls out — and the one rsc itself applies — is: **committed `.gitignore` when every clone should agree the path is excluded and inheriting it on first pull is the point; `.git/info/exclude` when the file is machine-local and nobody else's business.**
+
+`rsc doctor` diagnoses the failure this prevents. Its `worktreeHygiene()` probes with `git check-ignore` and, when that fails, says *"`.worktrees/` is not ignored by git here: run `npx @ericrisco/rsc sync` … and commit .gitignore so every clone gets it."* The "commit .gitignore" half is the part people miss.
+
+### 8.6 Re-opening one file inside an excluded directory needs the full incantation
+
+Git does not descend into an excluded directory, so a bare `!.claude/settings.json` under `.claude/` rescues nothing. The package's own comment is blunt about the earlier attempt: a negation that was "INERT in every case it fired… Measured, not argued — and the lesson is the one this repo keeps relearning, that a rule believed and untrue is worse than no rule."
+
+When it detects that wholesale-ignored state for either of the two files that carry the harness, it appends this chain, in exactly this order:
+
+```
+!.claude/
+.claude/*
+!.claude/rsc-bootstrap.mjs
+!.claude/settings.json
+```
+
+Reorder those lines and the rescue stops working. It also asks **git** whether the files are still ignored (`git check-ignore -q`) rather than reasoning about pattern spellings — copy that habit: after any bootstrap, verify with `git check-ignore -v <path>` instead of trusting the file.
+
+### 8.7 The two tracked files run on the reviewer's machine
+
+`rsc-bootstrap.mjs` plus the `.claude/settings.json` hook wiring that calls it are tracked on purpose (§2.2). That makes them the one part of the harness that executes on *someone else's* machine — every session start, every shell call. Review a PR touching them the way you review a CI workflow, not the way you review a README. Move fast on the docs; move slow here.
+
+### 8.8 Sharing this file across projects without publishing a dead link
+
+This document is the shared copy; other projects reach it through a symlink in their own `LEARNING/`. Two rules keep that honest:
+
+- **Relative symlink**, not absolute, so moving the repo tree does not break it.
+- **Exclude the symlink** — in `.git/info/exclude` (§8.5), never in the committed `.gitignore`.
+
+Exclusion is not cosmetic. Git stores a symlink as a blob whose *content is the target path text* (mode `120000`). Verified in a scratch repo: `git cat-file -p HEAD:shared.md` printed the path string, a clone carried that one blob and no file, and once the external source was removed the clone held a dangling link and zero content. A committed symlink to a machine-local file is therefore a broken link on GitHub and on every other machine, permanently. The knowledge travels through the canonical copy's own repository, never through the pointer.
+
+### 8.9 The CLI reports the *project's* version, not its own
+
+`npx @ericrisco/rsc --version` prints the version installed **in the project**, not the version of the code you just invoked — so it cannot tell you what you are about to run. Measured here: the command answered `installed in this project: 3.0.22` while the global npm install was **3.0.12**, and `~/.npm/_npx` held 2.0.8, 3.0.12, 3.0.18 and 3.0.22 side by side.
+
+That is why every command in this document names the version explicitly:
+
+```bash
+npx @ericrisco/rsc@$(jq -r .catalogVersion .rsc.json) sync
+```
+
+A bare `rsc sync` from a stale global install runs older code against newer project state. Trust `catalogVersion` in `.rsc.json`, not the CLI's self-report.
+
+### 8.10 Project snapshot after bootstrap
+
+| Field | Value |
+| --- | --- |
+| Workspace before | not a git repo · harness installed · no root `.gitignore` |
+| Targets | 11 — `antigravity, cline, continue, copilot, cursor, deepseek, junie, kiro, opencode, windsurf, zed` |
+| Pinned version | `catalogVersion 3.0.22`, agreeing with `.rsc/.version` and `.github/rsc/.rsc-state.json` |
+| Global CLI | `3.0.12` — older than the pin |
+| `git init` branch | `master` (`init.defaultBranch` unset) |
+| Committed set | 29 files / 296 KB |
+| Secret scan of that set | clean |
+
+One artifact not worth hunting: `.rsc/memory/.notice-without-git` exists in this project (its content is a bare ISO timestamp). It is **not** produced by any installed rsc version — 2.0.8, 3.0.12, 3.0.18 and 3.0.22 were each searched — and `git init` + `sync` does not remove it. It lives inside the ignored `.rsc/`, so it is inert; do not read it as state to act on.
