@@ -52,6 +52,11 @@ services:
       # The server reads PORT (src/index.ts). Compose interpolates it from the
       # root .env through container-management.sh, defaulting to 4001.
       PORT: ${PORT:-4001}
+      # The in-memory rate limiter reads these (RateLimiter.ts). Like PORT,
+      # they interpolate from the root .env through container-management.sh,
+      # defaulting to 100 req/min so a plain `docker compose up` stays safe.
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
       DB_HOST: postgres
       # The app reads these credential files (see postgres.ts) instead of
       # receiving passwords as environment variables.
