@@ -332,20 +332,20 @@ Private / Educational Project.
 **Directory layout (verified):**
 ```
 _01_rsc_wpm_backend/  → backend (Bun + Postgres 16, port 4001)
-_02_rsc_wp_frontend/ → frontend tests (Bun, bind mount .:/app, .env)
+_02_rsc_wp_frontend/ → frontend tests (Bun, bind mount .:/app; backend target injected from root ./.env PORT)
 LEARNINGS/docker-microservices-containers-learnings.md  → session notes (fixed version, 187 lines)
 local://docker-compose-dev-vs-prod-plan.md              → approved plan (same content)
 local://paste-1.md                                      → tutorial (ConnectionRefused, .env, network)
 ```
 
-**Environment (`_02_rsc_wp_frontend/.env`):** `API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` (container-internal; local backend tests use `http://localhost:4001` when `API_URL` is unset).
+**Environment (single source):** the backend URL derives from the root `./.env` `PORT`; `_02_rsc_wp_frontend/docker-compose.yml` injects `PORT: ${PORT:-4001}` and `API_HOST: 01_rsc_wpm_bun_psgres-backend` via `environment:`, and `src/core/config/apiConfig.ts` builds `http://${API_HOST}:${PORT}` (local runs with no env fall back to `http://localhost:4001`); an explicit `API_URL` fully overrides the derivation.
 
 **Key fixes applied:**
 - `.dockerignore`: excludes `tests/` from prod image.
 - `Dockerfile`: `CMD ["bun", "test", "./tests/usuarios.frontend.api.test.ts"]` (loop fixed — no `Restarting`).
 - `docker-compose.prod.yml`: lean (no bind mount).
 - `_01_rsc_wpm_backend/docker-compose.yml`: cleaned — only `postgres` + `backend` (removed `frontend` service that duplicated).
-- Current network: `_02_rsc_wp_frontend/docker-compose.yml` joins the external `01_rsc_wpm_backend_rsc-network` created by the backend Compose project; the frontend `.env` hostname resolves over that shared network.
+- Current network: `_02_rsc_wp_frontend/docker-compose.yml` joins the external `01_rsc_wpm_backend_rsc-network` created by the backend Compose project; the frontend container resolves the backend hostname (`API_HOST`, injected by that file) over the shared network.
 
 **Verified API test commands:**
 ```bash
@@ -365,7 +365,7 @@ cd _01_rsc_wpm_backend && bun run test:all
 **Verification checklist:**
 - [ ] `docker compose ps` shows the backend and PostgreSQL healthy/running.
 - [ ] Backend-container tests target `http://localhost:4001` from within that container.
-- [ ] Frontend-container tests target the backend hostname in `.env`; an unreachable configured URL fails rather than falling back to localhost.
+- [ ] Frontend-container tests target the backend hostname injected by `docker-compose.yml` (`API_HOST` over the shared network); an unreachable configured URL fails rather than falling back to localhost.
 - [ ] Both API suites pass health, create, GET-by-ID, PUT/persistence, and DELETE/post-delete checks.
 - [ ] Postgres `wpm_db` online (`pg_isready -U admin -d wpm_db`); table `usuario` exists.
 - [ ] `.dockerignore` excludes `tests/`; `docker build .` produces lean image (no `tests/` in `docker images` layer).
@@ -376,18 +376,18 @@ cd _01_rsc_wpm_backend && bun run test:all
 - Current container/API test findings and counts: `LEARNINGS/docker-microservices-containers-learnings.md`, section 6.
 
 **Notes:**
-- `./project-tools/container-management.sh test-frontend` creates a temporary frontend test container on the Compose network and uses its configured `API_URL`.
+- `./project-tools/container-management.sh test-frontend` creates a temporary frontend test container on the Compose network; the suite targets the derived base URL (`API_HOST` + `PORT` injected by Compose, or an explicit `API_URL` override).
 - The backend production image excludes the test source; `test-backend --container` copies the backend API test file into the running container temporarily, executes it there, then removes it.
 - If `GET /usuarios` returns `500` in backend test: server crash at endpoint (code/DB state issue, separate from docker/network — verify DB connection `DB_HOST=postgres`, table `usuario` exists).
 ---
 A POSIX-compliant bash script (`project-tools/container-management.sh`) for managing the full container lifecycle. It wraps `docker compose` and `docker` commands to avoid common mistakes that caused errors during this project:
 
-- **`start-all`**: Builds and starts the backend, then starts the frontend service on the external backend Compose network with `.env` pointing to `01_rsc_wpm_bun_psgres-backend:4001`. Uses `--no-deps` for frontend so it connects to the running backend directly, not a duplicate backend.
+- **`start-all`**: Builds and starts the backend, then starts the frontend service on the external backend Compose network, with the backend target derived from the root `./.env` `PORT` single source (injected as `PORT`/`API_HOST` by the frontend `docker-compose.yml`). Uses `--no-deps` for frontend so it connects to the running backend directly, not a duplicate backend.
 - **`stop-all`**: Stops both `backend` and `frontend` services (`docker compose stop`) and also any standalone `02_rsc_wp_bun_vue_frontend` container (`docker stop`).
 - **`remove-all`**: Stops and removes (`docker rm -f`) all running containers — clean slate before a new build/restart.
 - **`rebuild-all`**: Full cycle — builds backend (`build backend`), builds/rebuilds frontend (`build --no-cache frontend`); restarts backend first, then frontend (handles service rename `bun_app` → `backend` in compose). Confirms both `Up` via `docker ps`.
-- **`test-frontend`**: Runs `docker compose -f _02_rsc_wp_frontend/docker-compose.yml run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts`. It uses the `API_URL` hostname on the shared Compose network; an unreachable configured host fails instead of silently switching to localhost.
+- **`test-frontend`**: Runs `docker compose -f _02_rsc_wp_frontend/docker-compose.yml run --rm frontend bun test ./tests/usuarios.frontend.api.test.ts`. It targets the derived base URL (`API_HOST` + `PORT` injected by Compose, or an explicit `API_URL` override) on the shared Compose network; an unreachable configured host fails instead of silently switching to localhost.
 - **`test-backend --container`**: Runs backend unit tests locally, then copies and executes the API integration suite inside the running backend container.
 - **`help`**: Shows all actions and brief descriptions.
 
-Requires: `docker compose`, `docker ps`, `.env` (`API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` — never `localhost` inside the frontend container), `.dockerignore` (`tests/` excluded from image), and the external network configured in `_02_rsc_wp_frontend/docker-compose.yml` to match the backend Compose network. The test service uses `restart: "no"` because it exits after running tests; a future persistent Vue server would need a server `CMD` and an appropriate restart policy. Without the shared network, the backend hostname cannot resolve or connect.
+Requires: `docker compose`, `docker ps`, the root `./.env` with `PORT` (the single source; injected as `PORT`/`API_HOST` by the frontend `docker-compose.yml` — the container target is never `localhost`), `.dockerignore` (`tests/` excluded from image), and the external network configured in `_02_rsc_wp_frontend/docker-compose.yml` to match the backend Compose network. The test service uses `restart: "no"` because it exits after running tests; a future persistent Vue server would need a server `CMD` and an appropriate restart policy. Without the shared network, the backend hostname cannot resolve or connect.
