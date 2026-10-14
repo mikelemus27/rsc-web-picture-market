@@ -97,7 +97,8 @@ configuration at all** (no `access-control` / `cors` string in `_01_rsc_wpm_back
 exactly why "Add CORS configuration" is still open in `TODO.md`. So under option B the metadata is
 **unreachable from any browser client** until CORS lands *and* someone remembers to expose the
 header. Body metadata has no such dependency. (`Content-Length`, `Content-Type` and a few others
-are CORS-safelisted; `X-Total-Count` is not.)
+are CORS-safelisted; `X-Total-Count` is not.) See
+[`cors-learnings.md`](./cors-learnings.md) for the full mechanism and when it is needed at all.
 
 **The typing trap.** Headers are not visible to the type system. `res.headers.get("X-Total-Count")`
 returns `string | null`; converting it means `Number(...)`, which silently yields `NaN` when the
@@ -192,6 +193,7 @@ Current state, for the record: a grep for `ORDER BY` / `LIMIT` / `OFFSET` across
 
 - [`postgresql-learnings.md`](./postgresql-learnings.md) — database readiness, schema initialization, and the SQL layer this rests on.
 - [`bun-testing-learnings.md`](./bun-testing-learnings.md) — running the backend suites while changing this contract.
+- [`cors-learnings.md`](./cors-learnings.md) — what CORS enforces, when it is needed, and why header-based metadata is unreadable from a browser without it.
 - `TODO.md` — the open *Add pagination to `GET /usuarios`* item, and the open *Add CORS configuration* item that §4 depends on.
 
 (2026-10-13)
