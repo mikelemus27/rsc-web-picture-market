@@ -98,24 +98,69 @@ The shape was settled with the user **before** implementation:
 
 ## Checklist
 
-- [ ] 1. RED first: both new suites fail — no `Cors` module exists yet.
-- [ ] 2. GREEN: policy + wrapper + `index.ts` wiring → `bun run test:cors` passes.
-- [ ] 3. `bunx tsc --noEmit` → exit 0, no output.
-- [ ] 4. Compose pass-through verified via `docker compose config`.
-- [ ] 5. Regression: the existing hermetic suites still pass; `/health` unaffected.
-- [ ] 6. No CORS headers on a disallowed origin and none when the variable is unset (the deny-by-default proof).
-- [ ] 7. `BackEnd_README.md` documents the variable; `TODO.md` item closed with evidence.
+- [x] 1. RED first: both new suites failed with
+      `Cannot find module '../src/infraestructura/adaptadores/input/http/Cors'` — `0 pass / 2 fail`,
+      exit 1. Observed by the implementing worker before any implementation existed; the parent did
+      **not** re-observe this one. It is structurally sound rather than merely asserted: `Cors.ts` is
+      new on this branch (it shows as untracked in `git status`), so a missing-module failure was the
+      only possible outcome before the module was written.
+- [x] 2. GREEN: `bun run test:cors` → **34 pass / 0 fail**, 76 `expect()` calls across 5 files; the
+      two new suites alone are 23 pass / 0 fail / 56 expects.
+- [x] 3. `bunx tsc --noEmit` → exit 0, no output.
+- [x] 4. Compose pass-through: `docker compose config` → `CORS_ALLOWED_ORIGINS: ""` when unset, and
+      `http://localhost:3000,http://localhost:5173` when set.
+- [x] 5. Regression: `test/health.test.ts`, `test/create-usuario-handler.test.ts` and
+      `test/server-port.test.ts` all pass in the same run.
+- [x] 6. Deny-by-default proven live against the rebuilt stack (below), not only hermetically.
+- [x] 7. `BackEnd_README.md` documents the variable; `TODO.md` item closed with evidence.
 
 ## Evidence
 
-Filled in as each check is observed. No row is added before it is run.
+Every row was re-run by the parent after the worker returned. Nothing below is taken on the
+worker's word.
 
-| Check | Command | Result |
+| Check | Command (cwd `_01_rsc_wpm_backend`) | Result |
 | --- | --- | --- |
-| — | — | pending |
+| Typecheck | `bunx tsc --noEmit` | exit 0, no output |
+| Full feature suite | `bun run test:cors` | 34 pass / 0 fail, 76 expects, 5 files, exit 0 |
+| New suites only | `bun test test/cors.test.ts test/cors.api.test.ts` | 23 pass / 0 fail, 56 expects, exit 0 |
+| Compose interpolation | `docker compose config` | `""` unset; both origins when set |
+| RED (worker-observed) | `bun test test/cors.test.ts test/cors.api.test.ts` | `Cannot find module …/Cors`; 0 pass / 2 fail |
+
+### Live proof on the rebuilt stack
+
+The hermetic suite re-implements the wiring, so on its own it cannot prove that `index.ts` is
+wired correctly. The backend image bakes `src/`, so the stack was rebuilt and driven with `curl`.
+`/health` is the probe because the limiter exempts it — leaving the headers as the only variable:
+
+- **Deny by default** — rebuilt with the variable unset, `GET /health` with
+  `Origin: http://localhost:3000` returned `200` with **no** `Access-Control-Allow-Origin`, only
+  `Vary: Origin`.
+- **Allowed origin** — recreated with `CORS_ALLOWED_ORIGINS=http://localhost:3000`, the same request
+  returned `Access-Control-Allow-Origin: http://localhost:3000` alongside `Vary: Origin`.
+- **Refused origin** — with the variable still set, `Origin: http://evil.test` returned **no**
+  `Access-Control-Allow-Origin`, only `Vary: Origin`.
+- **Preflight** — `OPTIONS /usuarios` with an allowed origin returned `204` carrying
+  `Access-Control-Allow-Origin`, `Vary: Origin`,
+  `Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS`,
+  `Access-Control-Allow-Headers: Content-Type` and `Access-Control-Max-Age: 600`.
+- **Restored** — recreated once more without the variable and again returned no
+  `Access-Control-Allow-Origin`, so the stack is left in its original deny-by-default state.
+
+Two honest limits on this evidence:
+
+- **`curl` cannot prove browser enforcement.** CORS is enforced by the *browser*. The live checks
+  prove the server emits exactly the headers the policy dictates, which is the server's entire
+  responsibility here; nothing above demonstrates an actual cross-origin read succeeding, and no
+  browser client exists in this repository to demonstrate it with.
+- **Four consecutive preflights all returned `204`, but that alone proves nothing about the
+  limiter** — four requests cannot exhaust a 100/minute budget. The real proof of the bypass is the
+  hermetic test with `max: 1`: a preflight leaves the single slot unspent, so the next `GET` is
+  `200` and the `GET` after that is `429`. Without the short-circuit the *first* `GET` would already
+  be `429`.
 
 ## Next step
 
-Implement RED → GREEN, wire the compose pass-through, then close the `TODO.md` item with the
-observed evidence. Issue/PR and any push remain the user's decision under ordinary repository
-policy.
+Implemented and verified. The `TODO.md` item is closed with this evidence. The change is
+**uncommitted** on `feat/dev-backend-cors`; committing, the GitHub issue and any PR remain the
+user's decision under ordinary repository policy.
