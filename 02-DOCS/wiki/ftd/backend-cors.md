@@ -26,8 +26,10 @@ The shape was settled with the user **before** implementation:
   feature is inert until deliberately configured and today's behaviour is unchanged,
 - an **allowlist** read from configuration, never a hardcoded origin and never a blanket `*`,
 - **preflights are exempt from the rate limiter**, by construction rather than by special case,
-- **configurable like `PORT`** — interpolated from the root `./.env` through the backend
-  `docker-compose.yml`, the convention the port and the limiter already follow.
+- **configurable by environment variable** — read from `CORS_ALLOWED_ORIGINS`, set in the
+  backend's own `.env` (the file Compose reads beside its compose file) or exported in the shell.
+  The repo-root `.env` does **not** reach this service: `container-management.sh` exports only
+  `PORT` from there.
 
 ## Scope
 
@@ -93,8 +95,10 @@ The shape was settled with the user **before** implementation:
    the request's origin, so a shared cache must key on it. It is sent even when the origin is
    refused, because the decision itself is origin-dependent.
 6. **Configuration, not code, decides the allowlist.** Nothing is hardcoded; enabling a browser
-   client is one line in the root `./.env`. This keeps the policy auditable in one place and
-   consistent with `PORT` and the limiter's environment contract.
+   client is one line in the backend's own `.env`, or one exported variable in the shell. This keeps
+   the policy auditable in one place. The repo-root `.env` is deliberately **not** where it belongs:
+   Compose reads the `.env` beside the compose file, and `container-management.sh` exports only
+   `PORT` from the root, so a variable placed there would never reach the container.
 
 ## Checklist
 
@@ -158,6 +162,22 @@ Two honest limits on this evidence:
   hermetic test with `max: 1`: a preflight leaves the single slot unspent, so the next `GET` is
   `200` and the `GET` after that is `429`. Without the short-circuit the *first* `GET` would already
   be `429`.
+
+### Where the variable actually comes from (verified)
+
+An earlier draft of this record — and the two compose comments — claimed the value is interpolated
+from the root `./.env`. That is **wrong**, and it was corrected here after a direct Compose test. A
+throwaway Compose project placed beside this repository proved the resolution order:
+
+| Where `CORS_ALLOWED_ORIGINS` is set | Reaches the container? |
+| --- | --- |
+| `_01_rsc_wpm_backend/.env` (beside the compose file) | **yes** — this is the file Compose reads |
+| exported in the shell before `docker compose up` | **yes**, and it overrides the file |
+| the repo-root `./.env` | **no** — a `.env` in the current directory is never read for this project |
+
+`container-management.sh` exports only `PORT` from the root `.env`, so `PORT` is the single variable
+that genuinely travels that path. The `RATE_LIMIT_*` pair never did either, despite the comment it
+carried; that comment is corrected in the same change.
 
 ## Next step
 
