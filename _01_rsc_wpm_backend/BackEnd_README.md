@@ -202,8 +202,11 @@ The microservice automatically reads connection parameters from environment vari
 | `PORT` | Microservice listening port | `4001` | `4001` |
 | `RATE_LIMIT_MAX_REQUESTS` | Maximum requests allowed per client IP per window | `100` | `100` |
 | `RATE_LIMIT_WINDOW_MS` | Rate limit window duration in milliseconds | `60000` | `60000` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated origins allowed to read API responses from a browser (CORS) | *(empty — denies all)* | *(empty — denies all)* |
 
 Requests above the limit from the same client IP return `429` with `{ error: "Too Many Requests", retryAfterMs }` and a `Retry-After` header; `/health` is exempt from rate limiting.
+
+CORS is off by default: with `CORS_ALLOWED_ORIGINS` unset no `Access-Control-Allow-Origin` header is sent, so browsers block cross-origin reads until an allowed origin is configured. Preflight `OPTIONS` requests are answered before the rate limiter, so they never consume a client's request quota.
 
 ---
 
