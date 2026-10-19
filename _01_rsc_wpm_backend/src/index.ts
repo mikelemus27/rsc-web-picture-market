@@ -19,6 +19,8 @@ import { handleCreateUsuario } from "./infraestructura/adaptadores/input/http/Cr
 import { handleHealth } from "./infraestructura/adaptadores/input/http/HealthHandler";
 import { createRateLimiter, tooManyRequestsResponse }
 from "./infraestructura/adaptadores/input/http/RateLimiter";
+import { createCorsPolicy, parseAllowedOrigins, withCors }
+from "./infraestructura/adaptadores/input/http/Cors";
 import { EliminarUsuarioUseCase } from "./aplicacion/caso_uso/usuario/eliminar_usuarios/EliminarUsuarioUseCase";
 import { ActualizarUsuarioUseCase } from "./aplicacion/caso_uso/usuario/actualizar_usuarios/ActualizarUsuarioUseCase";
 import { CrearUsuarioUseCase } from "./aplicacion/caso_uso/usuario/crear_usuario/CrearUsuarioUseCase";
@@ -103,6 +105,16 @@ const rateLimiter = createRateLimiter({
 
 /*
 ==================================================
+CORS
+==================================================
+*/
+
+const corsPolicy = createCorsPolicy({
+  allowedOrigins: parseAllowedOrigins(process.env.CORS_ALLOWED_ORIGINS),
+});
+
+/*
+==================================================
 HELPER JSON RESPONSE
 ==================================================
 */
@@ -130,7 +142,7 @@ const server = Bun.serve({
 
   port: Number(process.env.PORT) || 4001,
 
-  async fetch(req) {
+  fetch: withCors(async (req) => {
 
     try {
 
@@ -434,7 +446,7 @@ const server = Bun.serve({
         500
       );
     }
-  },
+  }, corsPolicy),
 });
 
 /*
