@@ -2,7 +2,8 @@
 
 - **Date**: 2026-10-14
 - **Branch**: `feat/dev-backend-cors` (from `dev` @ `254a532`)
-- **Tracks**: `TODO.md` → *Add CORS configuration* (item 30)
+- **Tracks**: GitHub issue #54 → PR #55 (merged as `93db31c`); `TODO.md` → *Add CORS configuration*
+  (item 30)
 - **Lane**: FTD
 - **Route**: delegated direct — one bounded writer for 3 non-trivial new files (`Cors.ts` + two
   suites), with the wiring, compose and docs edits in the same unit; parent verifies independently.
@@ -121,15 +122,21 @@ The shape was settled with the user **before** implementation:
 ## Evidence
 
 Every row was re-run by the parent after the worker returned. Nothing below is taken on the
-worker's word.
+worker's word. Observed on branch `feat/dev-backend-cors`; the 2026-10-16 rows are re-runs after
+the merge, on `dev` @ `93db31c`. `bun` commands run in `_01_rsc_wpm_backend`;
+`container-management.sh` runs from the repository root.
 
-| Check | Command (cwd `_01_rsc_wpm_backend`) | Result |
+| Check | Command | Result |
 | --- | --- | --- |
 | Typecheck | `bunx tsc --noEmit` | exit 0, no output |
 | Full feature suite | `bun run test:cors` | 34 pass / 0 fail, 76 expects, 5 files, exit 0 |
 | New suites only | `bun test test/cors.test.ts test/cors.api.test.ts` | 23 pass / 0 fail, 56 expects, exit 0 |
+| Canonical gate | `project-tools/container-management.sh test-backend` | 58 pass / 0 fail, 233 expects, 8 files, exit 0 |
+| Canonical gate (container) | `project-tools/container-management.sh test-backend --container` | 13 pass / 0 fail, exit 0 |
 | Compose interpolation | `docker compose config` | `""` unset; both origins when set |
 | RED (worker-observed) | `bun test test/cors.test.ts test/cors.api.test.ts` | `Cannot find module …/Cors`; 0 pass / 2 fail |
+| Green re-run on merged `dev` | `project-tools/container-management.sh test-backend` | 58 pass / 0 fail, 233 expects, 8 files, exit 0 |
+| Typecheck re-run on merged `dev` | `bunx tsc --noEmit` | exit 0 |
 
 ### Live proof on the rebuilt stack
 
@@ -181,6 +188,11 @@ carried; that comment is corrected in the same change.
 
 ## Next step
 
-Implemented and verified. The `TODO.md` item is closed with this evidence. The change is
-**uncommitted** on `feat/dev-backend-cors`; committing, the GitHub issue and any PR remain the
-user's decision under ordinary repository policy.
+Shipped and closed: PR #55 merged into `dev` (`93db31c`), issue #54 closed as completed, and this
+record closes the CORS backlog entry (`TODO.md` item 30). Nothing further is pending for this
+feature. The natural follow-ups, none of them committed to yet: an actual browser client to
+demonstrate cross-origin enforcement end to end — nothing in this repository has one today, so the
+live checks above prove the headers the server emits rather than a real cross-origin read — and
+`Access-Control-Allow-Credentials` if the API ever grows authentication worth sending. The Compose
+environment-resolution question this work surfaced is tracked separately as `TODO.md` item 37 and
+is deliberately not settled here.
