@@ -1,6 +1,6 @@
 # rsc harness learnings
 
-Projects: `rsc-web-picture-market` (original — §1–§7) and `rsc-RocketLandingSimulation` (adopted 2026-10-12 — §8) — rsc-harness (`@ericrisco/rsc`) orchestrating multiple AI assistant targets in these repositories.
+Projects: `rsc-web-picture-market` (original — §1–§7), `rsc-RocketLandingSimulation` (adopted 2026-10-12 — §8) and `05_scrapy-docker-ESE-vag4-bkd1-tst2` (adopted 2026-10-16 — §9) — rsc-harness (`@ericrisco/rsc`) orchestrating multiple AI assistant targets in these repositories.
 
 Use this as an operational reference for how the rsc harness is installed, versioned, updated and repaired in these projects. Verify current versions and `.rsc.json` before copying commands; the harness changes with every release. Sections that describe one project name it; everything else is shared.
 
@@ -72,6 +72,17 @@ The assistant tells a clone what is missing and asks before installing anything.
 - **orient** — the always-on voice: short one-idea STE-style sentences in the user's language, every answer standalone, technical or with analogies (from `technical_level` in `user-profile.md`), every turn closes with the compass block (📍 today/next-step ❓).
 - **unslop** — makes text you send to other people sound human, no AI tells.
 - In Claude Code a hook re-asserts the **lane decisor** on every turn, so every request is classified before anything is written.
+
+### 3.1 How the block gets into your file — `targets/_md-block.js`
+
+The whole mechanism is a single 75-line module. It is surgery on a shared instructions file, not a rewrite, and it never touches a line of your own. Verified in 3.1.0:
+
+- **Two literal markers** — `<!-- rsc-suggest:start -->` and `<!-- rsc-suggest:end -->` — plus a fixed seam of `\n\n`.
+- **First wire: append.** With no start marker present, `doc += seam + block + '\n'` — your content stays exactly where it was and the block lands at the end. Measured here: `GEMINI.md` carries the start marker at line **121 of 240**, below all 120 lines of the project's own text. `AGENTS.md`, `CONVENTIONS.md` and `.github/copilot-instructions.md` carry it at **line 3**, because those files held nothing of their own before rsc wired them.
+- **Re-wire: replace in place.** If the start marker exists, a non-greedy regex swaps `START…END` for the new block, wherever the region sits. A second `sync` never appends a second copy.
+- **Between the markers is the only part of your file rsc owns — and it is replaced wholesale.** Anything you hand-write inside is gone at the next `sync` or onboard. Above the start marker and below the end marker, nothing is ever rsc's.
+- **Wiring an empty file leaves two blank lines at the top.** The seam is written on the append path and an empty document takes it too, so the file begins `\n\n<!-- rsc-suggest:start -->`. Measured on all three files rsc created here — first ten bytes are `\n\n<!-- rsc`, each 122 lines.
+- **Removal is exact.** `unwireHook` deletes the seam and the block, and stops. The source keeps the reason beside the code: an earlier version ended with a document-wide `\n{3,}` → `\n\n` pass that "tidied blank lines the author had put hundreds of lines away from anything of ours", and in issue **#249** that file was a project's hand-written constitution. The pass is gone. rsc does not reformat the rest of your document.
 
 ## 4. The lanes: Answer / FTD / SDD
 
@@ -295,3 +306,181 @@ A bare `rsc sync` from a stale global install runs older code against newer proj
 | Secret scan of that set | clean |
 
 One artifact not worth hunting: `.rsc/memory/.notice-without-git` exists in this project (its content is a bare ISO timestamp). It is **not** produced by any installed rsc version — 2.0.8, 3.0.12, 3.0.18 and 3.0.22 were each searched — and `git init` + `sync` does not remove it. It lives inside the ignored `.rsc/`, so it is inert; do not read it as state to act on.
+
+## 9. Field notes from a third project — `05_scrapy-docker-ESE-vag4-bkd1-tst2` (2026-10-16)
+
+Local workspace of the `CloudDataObserver` remote. Installed at **3.1.0** into a tree that *already* was a git repository, so §8's not-yet-a-repo trap cannot fire here. What it exposed instead has nothing to do with this project: **rsc declares an install with one function and writes it with another, and the two disagree whenever a target has commands but no agents.** §8's damage was silent; this one is total — the verification rejects the install and rolls every byte back.
+
+### 9.1 `onboard` cannot complete while an agent-less target is in the plan
+
+Accepting the plan failed identically on every attempt:
+
+```
+RSC_ONBOARDING_INCOMPLETE: missing governed path .clinerules/workflows/python-review.md;
+missing governed path .windsurf/workflows/python-review.md
+```
+
+Exit `4`, and then **no install at all**: no `.rsc.json`, no `.clinerules/`, no `.windsurf/`, an empty `02-DOCS/wiki/harness/`, every target directory at zero files, working tree clean. Not a crash — `restoreBackup` (`onboarding-apply.js:342`). The transaction noticed a difference and undid everything. The plan was the wrong half.
+
+`plan.governedPaths` is built by flattening `managedPathsForInstall` over the targets (`onboarding.js:334`), and inside that function two adjacent branches are scoped differently (`install-apply.js:114-137`):
+
+| Branch | Guard | Consequence |
+| --- | --- | --- |
+| agents | `if (targetHasAgents(target))` | scoped correctly |
+| commands | **no such guard** | resolves the desired agents from installed skills, then declares `commandPath(...)` for a target that can never hold one |
+
+`targetHasAgents` only knows `claude, junie, cursor, opencode, gemini, copilot, kiro, codex` (`targets/agents.js:33`). The *other* list, `COMMAND_TARGETS`, adds `cline` and `windsurf` (`targets/commands.js:5`). So the planner declares a workflow command for exactly those two, derived from an agent they cannot have. Here the entity was `python-reviewer` (skill `python`) → `python-review.md`.
+
+The **writer** resolves commands from installed state instead:
+
+```js
+const desiredCommands = resolveCommands({ target, skills: …, agents: state.agents, … });   // install-apply.js:586
+```
+
+For an agent-less target `state.agents` is `[]` — `reconcileAgents` early-returns `names: []` (`targets/agents.js:362`) — so `stackAliases` yields nothing (`targets/commands.js:104`) and the file is never written. `verifyOnboarding` (`onboarding-apply.js:199`) requires every declared path to exist, names those two, and the rollback follows.
+
+The sharpest framing: **the verifier already knows the rule.** `expectedAgentsFor` filters with `targetHasAgents` (`onboarding-apply.js:51`) — the agents half of the same check is scoped correctly, and only the governed-path list was not. That same predicate on the commands branch is the minimal fix.
+
+The repro class is structural, not project-specific: any plan that includes a target with commands but no agents, while the agents/skills side produces a command derived from an agent. Measured here: 2 targets × 1 alias-producing agent = 2 phantom paths, and the error names both.
+
+**The only lever is the target list.** `--force` and `--dry-run` never reach this code, and no release newer than 3.1.0 was available. Regenerate the plan without the agent-less targets, accept it, then re-add them outside the plan (§9.2). The exit message is the diagnostic: it already prints the exact phantom paths.
+
+### 9.2 `sync --target` adds a target the plan could never hold
+
+With the remaining 11 targets applied cleanly, the two dropped ones came back in one command:
+
+```bash
+npx @ericrisco/rsc@3.1.0 sync --target cline,windsurf
+```
+
+Exit `0` — and that is a property of the code path, not luck. **No caller of `verifyOnboarding` lives on the sync route.** It has exactly two: the transactional apply (`onboarding-apply.js:338`) and a read-only readiness probe (`rsc.js:155`). `sync` re-materialises catalog content from the manifest and never re-derives the accepted plan's path list, so the over-declaration has nowhere to surface.
+
+Measured on disk afterwards:
+
+| | `.clinerules/` | `.windsurf/` |
+| --- | --- | --- |
+| workflow files | 13 | 13 |
+| `state.commands` | the same 13 | the same 13 |
+| `python-review.md` | **absent** | **absent** |
+
+Writer and recorded state agree, and neither holds the file the plan declared — it was never going to exist. The lesson generalises: the plan's own path list is the least trustworthy artifact in this flow. **Disk wins.** Re-read the target directories after a sync instead of trusting either list.
+
+### 9.3 `--dry-run` previews the planner, not the writer
+
+Both dry runs return the planner's list — the same function §9.1 blames:
+
+```js
+if (dryRun) return { dryRun: true, skills: skillIds, agents: agentIds, paths: managedPaths };   // install-apply.js:264
+```
+
+`managedPaths` at `:259` is `managedPathsForInstall`, and `syncInstalled` calls that function directly for its dry run (`install-apply.js:726`). So the preview inherits the over-declaration.
+
+Measured: `sync --dry-run --target cline,windsurf` listed `.clinerules/workflows/python-review.md` and `.windsurf/workflows/python-review.md` among 164 paths — the two files the real run then declined to create (§9.2). Same asymmetry, one layer up: a dry run shows what the *declaring* function believes, not what the writer will do.
+
+Read a dry run for shape (skills, agents, actions), not for its path count, and confirm against disk after the real run.
+
+### 9.4 The split is applied for you — verify it in bulk
+
+Two plans are worth comparing. The 13-target plan declared **625** governed paths; the 11-target plan that finally applied declared **531** — the two dropped targets were 94 of them. Of the 531, **514 are excluded** and **17 are left to git**, which `git status` agrees with exactly:
+
+```bash
+git status --porcelain -uall     # 17 entries
+```
+
+The 17 are the declaration (`AGENTS.md`, `CONVENTIONS.md`, `.rsc.json`), the skeleton (`01-TOOLS/` — six files — plus `02-DOCS/wiki/harness/decisions.md`, `02-DOCS/wiki/harness/installation-plan.md` and `02-DOCS/wiki/sdd/constitution.md`), the modified `.gitignore` and `GEMINI.md`, and the three per-target copies of the always-on layer: `.clinerules/rsc-suggest.md`, `.junie/guidelines.md`, `.kiro/steering/rsc-suggest.md`. Those three surface only because this project's own ignore list covers `.gemini/ .codex/ .cursor/ .opencode/ .windsurf/ .zed/` but not `.clinerules/ .junie/ .kiro/` — and rsc neither ignores nor un-ignores them. `.gitignore` is the only file that grew — **+552 lines** of rsc-owned block (§8.2) — and nothing else needed a per-path verdict.
+
+Two habits:
+
+- `-uall` is not optional. Without it git collapses each new directory to one line, and those 17 files read as 10.
+- Verify in bulk, not one call per path: `git check-ignore --stdin < <(sort -u planned-paths.txt)`.
+
+### 9.5 Committing the install — what is required, and what decides what git sees
+
+Settled only when the 17 files were actually committed, as `1d7969b` (17 files, 3655 insertions).
+
+**`.rsc.json` alone is enough to rebuild the harness.** It is the declaration — 13 targets, 31 skills, 6 agents, `catalogVersion` — and `sync` re-materialises every machine-local path from it. Measured in §9.2: two targets that were never in the accepted plan got their 13 workflows each, from the manifest. So the sufficiency claim is not a reading of the docs, it is §9.2's observed behaviour. What `sync` cannot put back is the repo's **front door**: the always-on layer (`AGENTS.md`, `GEMINI.md`, `CONVENTIONS.md`, `.github/copilot-instructions.md`) and the project's own content (`01-TOOLS/`, `02-DOCS/`). Those are what a human or an assistant reads before running any command, so they are the ones to commit on purpose. Everything else in the 17 is a copy rsc can make again.
+
+**Which always-on copies git sees is decided by your ignore file, not by rsc.** rsc's generated block contains **no negation (`!`) lines** in this project, so it never reaches for a file to un-ignore. What it does contain is the exclusion of the machine-local half — and the *pre-existing* list decides the rest, because it already ignores whole assistant directories:
+
+```
+.rsc/  .rag/  .gemini/  .antigravity/  .codex/  .cursor/  .dsh/  .opencode/  .windsurf/  .zed/
+```
+
+`.clinerules/`, `.junie/` and `.kiro/` are absent from that list. That is the *entire* reason `.clinerules/rsc-suggest.md`, `.junie/guidelines.md` and `.kiro/steering/rsc-suggest.md` appear in `git status` while the `.gemini/`, `.codex/`, `.cursor/`, `.opencode/`, `.windsurf/` and `.zed/` copies of the same layer never do: same catalog content, same 122 lines each, different visibility, decided by nobody but your own ignore rules. **rsc neither ignores nor un-ignores them.** Contrast §2.2, where rsc *does* un-ignore `.claude/rsc-bootstrap.mjs` and `.claude/settings.json` — it writes a negation only when a target needs one to work.
+
+**A project without `claude` has no clone-notice mechanism.** §2.2's bootstrap pair is the thing that tells a fresh clone the harness is missing and offers `sync`. With `claude` not among the targets there is no `.claude/` directory at all — verified: `.claude/` absent, and a full-tree search for any `*bootstrap*` artefact returns nothing. `.codex/hooks.json` and `.gemini/settings.json` exist, but neither is a bootstrap. So nothing announces the gap; the "a clone is told, and asked before installing anything" paragraph of §2.2 simply does not fire here. A clone discovers the situation by having `.rsc.json` and no `.rsc/`, and the recovery is the documented one — `sync`, never `@latest`.
+
+**Prove "no symlink is in this commit" from the index, not the diff.** Every target here materialises 33–62 entries, and the per-assistant skill links among them are symlinks (§2). The index records the file mode, which is what makes the claim provable:
+
+```bash
+git ls-files -s | awk '$1=="120000" {print}'   # 120000 == symlink; empty output == clean
+git diff --cached --name-only | while read -r p; do git check-ignore -q "$p" && echo "staged but ignored: $p"; done
+```
+
+Measured on `1d7969b`: 17 paths staged, **zero** mode-`120000` entries in the whole index, and no staged path reported as ignored. Reading the index instead of `git status` is what turns "no symlink was committed" from a plausible claim into a provable one.
+
+### 9.6 The branch guard: declared, installed, and enforced nowhere
+
+§5's trunk policy is the harness's most "team-like" default, and in this project it does nothing at all.
+
+| §5 says | What is true here |
+| --- | --- |
+| A commit on the default branch is refused and the agent asks: this branch, a new one, or unlock main? | Nothing refuses anything. §5's own limit line applies — "the refusing hook (branch-guard) runs only in **Claude Code**. In Codex, Gemini, Cursor and OpenCode the same rules are carried by skills + session memory, **but nothing enforces them**" — and `claude` is not among the 13 targets, so there is no `.claude/` to hold a hook (§9.5). The branch rules in this repo are prose in the always-on layer. That is the whole enforcement surface |
+| It fires when the repo shows CI, a deployment file, or ≥2 people in the last 50 commits | The condition is on the *repo*, not on owning a `.rsc.json`. Measured here: no `.github/workflows`; none of `Dockerfile`, `docker-compose.yml`, `compose.yaml` at the root; one author across the repo's 5 commits. All three absent → this repo would not be guarded even if `claude` were installed. A harness does not inherit the guard by being installed |
+| Turn it off with `rsc main unlock` | Nothing to unlock. The command exists; its subject does not. |
+
+**Declared ≠ enforced, and ≠ committable.** Both policy files are declared managed paths in `.rsc.json` and both are on disk: `.rsc/trunk-policy.mjs` (4,801 bytes) and `.rsc/.no-trunk-open` (0 bytes, an empty marker). But all of `.rsc/` is machine-local (§2), so no clone carries them until it runs `sync` — the harness's own git decisions are precisely the ones it refuses to version, and no branch policy is reviewable in a diff.
+
+**The flow this repo actually runs**, recorded here once because the harness will not state it: `main` holds verified state and is level with `origin/main`; `dev` was created from `main`@`1d7969b` on 2026-10-16 as the integration branch; work leaves `dev` and returns by PR. The precedent for the shape is §7's line — "PRs target `dev`; trivial docs-only/config changes commit directly on `dev`". `.worktrees/` is already ignored (`.gitignore:44`), so §5's isolation half needs no setup here: a second session on another branch lands in `.worktrees/<branch>/` and stays out of `git status`.
+
+## 10. Adopting rsc in a repo that has never had it (the clean-repo flow)
+
+Verified 2026-10-17 against `@ericrisco/rsc@3.1.0` and its CLI. **Git history decides nothing; the tracked `.rsc.json` decides everything** — the number of clones a repository passed through is irrelevant, because a clone of a clone stays "clean" exactly as long as nobody ever committed `.rsc.json`.
+
+```bash
+git ls-files .rsc.json    # prints `.rsc.json` → sync;  prints nothing → onboard
+```
+
+| Where you are | Command | Why |
+| --- | --- | --- |
+| Brand-new, empty directory | `git init` **first**, then `npx -y @ericrisco/rsc@<v> onboard --target <assistant>` | rsc writes *tracked* files and never commits them (§6), so a repo that already exists puts the whole harness in one separable, revertable commit. `onboard` would offer `git init` mid-flow otherwise (its Phase 4 ground check), interleaving scaffold and history — and §8.1 records that until the folder is a git repo rsc writes no `.gitignore` at all |
+| Cloned repo, zero rsc (the use case asked about) | `npx -y @ericrisco/rsc@<v> onboard --target <assistant>` | nothing to rebuild; the wizard must ask its four questions and produce a plan |
+| Clone of an rsc repo (`.rsc.json` tracked) | `npx -y @ericrisco/rsc@<catalogVersion> sync` | `.rsc.json` already answers all four wizard questions (§1), so `sync` asks nothing |
+
+**Pin the version you resolve; don't let a tag float.** A fresh install has no `catalogVersion` to inherit — that pin does not exist yet — so resolve first, then pin what you resolved:
+
+```bash
+npm view @ericrisco/rsc version     # → 3.1.0 (published 2026-10-14; registry check 2026-10-17, `dist-tags` has only `latest`)
+npx -y @ericrisco/rsc@3.1.0 onboard --target <assistant>
+```
+
+Same bytes `@latest` would give you today, but reproducible: `onboard` writes that version into the new `.rsc.json`, and every later `sync`/upgrade follows *your* pin instead of npm's moving tag. This is the same discipline as §6, where a clone runs `sync` against the exact `catalogVersion` "never `@latest` — a release nobody here adopted is drift"; the difference is that at first adoption you *create* the pin rather than inherit it. Later releases reach a repo through the auto-updater (§6), not through re-running bare `npx`.
+
+**`--target` is not decoration on a fresh directory.** Without it, the CLI "uses the assistant already installed here; if two are, it asks instead of guessing" — an empty directory has no installed assistant, so the flag is what prevents a guess. Comma-separate for several.
+
+**What the two flows feel like:** `onboard` asks technical level / project kind / goal / assistants and stops at the plan gate — nothing writes until you accept the SHA-256 plan id (§1); on an existing small codebase, read the plan's deferred/excluded rows before accepting, because a minimal repo is where a misjudged stack shows up first. `sync` asks nothing and starts from `.rsc.json`.
+
+## 11. Leaving rsc — the three exits, by intent (verified 2026-10-17)
+
+The CLI offers three different verbs; they match three different intentions, and only the last one deletes.
+
+| Intent | Command | What actually happens | Undo |
+| --- | --- | --- | --- |
+| "The agent stops driving this repo" | create an empty `.rsc/.no-harness` | The always-on layer's own contract: the repo is never re-onboarded, `init` never auto-starts ("Use `rsc onboard` to re-enable the harness for this project"). Nothing is deleted | delete the file |
+| "Drop skills I never use, keep the harness" | `rsc uninstall <id...>` | Per-skill mirror of `add <id...>` (§6's command list); the harness stays | `rsc add <id...>` |
+| "Remove the harness from this repo" | `npx -y @ericrisco/rsc@3.1.0 purge` | **Backs up first**, then removes — its own output: "Created backup `<id>` (`<N>` files)… Use `rsc backups` to see them, `rsc restore <id\|latest>` to bring any back" | `rsc restore <id\|latest>`, then git |
+
+**`.no-harness` is machine-local — a correction.** It does *not* travel to the next clone, however natural that assumption is: it lives under `.rsc/`, which is ignored wholesale here (`.gitignore:17 .rsc/`; `git ls-files '.rsc/*'` → 0 files), and `.rsc.json` carries no trace of it (its `optOuts` is `["trunk-open"]`, unrelated). What travels is the *instruction* — the always-on block that tells an agent to create it is in every tracked target file (`AGENTS.md`, `GEMINI.md`, `CONVENTIONS.md`, …) — but the state must be recreated per machine. Two markers, two lifetimes: `.no-auto-update` is a project decision that §6 records as travelling in `.rsc.json`, `.no-harness` is a local refusal that does not.
+
+**For a full removal, git is the real undo** — rsc never commits for you (§6), so nothing is final until you do, and the sequence is a `git status` exercise, not a trust exercise:
+
+```bash
+git status                      # clean tree first, so the resulting diff is only rsc's
+npx -y @ericrisco/rsc@3.1.0 purge
+git status && git diff          # the file-level truth: what it removed, what it edited in place
+git add -A && git commit -m "chore(rsc): remove the harness"
+```
+
+Read that diff before staging it: rsc may leave `.gitignore` entries it generated (inert, but noise worth deleting in the same commit), and `01-TOOLS/` / `02-DOCS/` carry *your* content — profile, decisions log, wiki — which is project material even when the harness around it goes.
+
+**Unverified, deliberately:** the exact file list `purge` removes. The shipped package has no README and no per-command help (`rsc purge --help` falls back to the general usage line), and `dist/cli.js` is minified; rather than execute a destructive verb to find out, this section records only what the CLI states about its own behaviour (the backup) and lets `git status` after the run supply the real inventory.
