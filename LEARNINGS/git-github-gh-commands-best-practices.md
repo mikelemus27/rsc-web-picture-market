@@ -313,6 +313,58 @@ being solely responsible for it, independent of the auto-close behaviour.
   interpreting anything: `git fetch origin && git merge --ff-only origin/dev`.
 - Worktrees (or branches), never a second clone — the second clone needs its own fetch and drifts.
 
+### 17.1 A clone is a local repository; `origin` is a name, not a place
+
+"Clone" names both the act and the result: a clone *is* a local repository created from another
+one. Local and remote are **roles**, not kinds of repository — GitHub's copy is an ordinary (bare)
+repository that is "remote" only because a config entry says so:
+
+```bash
+git config --get remote.origin.url
+```
+
+A repository with no remotes at all is still a complete repository. `origin` is a key in
+`.git/config`; renaming or deleting it moves nothing and deletes no history.
+
+**`origin/dev` is not the server's branch.** It lives inside the local `.git` as
+`refs/remotes/origin/dev`, a snapshot of where `dev` pointed at the last fetch. Only `ls-remote`
+asks the server:
+
+```bash
+git rev-parse origin/dev          # local cache — can be stale, but looks authoritative
+git ls-remote origin refs/heads/dev   # asks the server, no cache involved
+git show -s --format='%h %cd %s' origin/dev
+```
+
+If someone pushes and you never fetch, `origin/dev` keeps describing yesterday while reading like
+the truth. Reading it as "the remote" is a reliable source of false confidence.
+
+**Refs and objects are independent.** Two clones can hold identical commits and different tag sets,
+which is legal and normal:
+
+```bash
+git tag -l                     # this clone only
+git ls-remote --tags origin    # the server's tags
+git push origin <tag>          # a bare `git push` sends branches, never tags
+```
+
+The tag object and the commit it points at are different SHAs. `ls-remote` prints both lines:
+`refs/tags/<name>` and its `^{}` peeled commit. The first proves the tag exists; only the second
+proves what it points at.
+
+**A worktree is not a clone.** `git worktree add` creates another working directory that shares the
+same objects and refs, so a branch or tag created there is instantly visible across the clone. A
+second clone shares nothing and drifts on its own schedule — prefer worktrees or branches (§17).
+
+Traps:
+
+- **A local tag is private until pushed.** `git fetch --tags` cannot create a ref that was never
+  pushed, so a README instructing readers to fetch one is broken for everyone but its author.
+- **A published tag is someone else's input.** Re-pointing it needs `--force-with-lease` and an
+  explicit decision; clones that already fetched keep the old object regardless.
+- **Ask the right source.** `git tag --points-at <sha>` answers about your clone; `git ls-remote`
+  answers about the server.
+
 ## B. GitHub Actions
 
 ### 18. Never infer CI behaviour from an absence of runs
