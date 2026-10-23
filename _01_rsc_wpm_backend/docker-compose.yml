@@ -33,6 +33,7 @@ services:
   # Build and run the API. It reaches PostgreSQL by the service name "postgres",
   # using the database's internal port rather than its host-published port.
   backend:
+  #API_URL=http://01_rsc_wpm_bun_psgres-backend:4001
     build: .
     container_name: 01_rsc_wpm_bun_psgres-backend
     restart: unless-stopped
