@@ -8,14 +8,38 @@ Historical operational notes for connecting the Bun backend, PostgreSQL, and fro
 ## 1. Arquitectura general
 
 - **PostgreSQL** (`postgres:16-alpine`): database `wpm_db`; use the current Compose configuration for credentials rather than copying them into notes.
-- **Backend** (`_01_rsc_wpm_backend/`): Bun en `4001`, conecta a `postgres` por red Docker (`pg.Pool`, `DB_HOST: postgres`, no `localhost`).
+- **Backend** (`_01_rsc_wpm_backend/`): Bun en `${PORT:-4001}` (4001 por defecto); conecta a `postgres` por red Docker (`pg.Pool`, `DB_HOST: postgres`, no `localhost`).
 - **Frontend (tests)** (`_02_rsc_wp_frontend/`): Bun que hace `fetch()` al backend indicado por `API_URL`. Si no se define, las pruebas locales usan `http://localhost:4001`; dentro del contenedor, `.env` debe apuntar al nombre de backend en la red compartida (`01_rsc_wpm_bun_psgres-backend:4001`).
 - **Red Docker**: el backend crea una red bridge con nombre de proyecto Compose; el frontend se une a ella como red externa. Verifica el nombre actual en ambos Compose files.
 
 Reglas clave:
 - Dentro de contenedor: `localhost` = ese mismo contenedor (nunca el backend).
-- Entre contenedores: usar `nombre_servicio:puerto` (ej: `backend:4001`).
+- Entre contenedores: el nombre del contenedor y el puerto en el que escucha (ver §1.1). El alias de servicio (`backend`) resuelve también, pero el nombre largo es el que usan frontend, scripts y documentación.
 - `.env` del contenedor frontend debe usar el nombre del backend, no `localhost`. Si `API_URL` está configurado pero no responde, las pruebas fallan; no cambian silenciosamente a localhost.
+
+### 1.1 La URL interna del backend, y de dónde sale cada trozo (verificado 2026-10-22)
+
+Los demás contenedores de la red Compose alcanzan el backend en:
+
+```text
+http://01_rsc_wpm_bun_psgres-backend:<PORT>
+```
+
+- **Nombre**: es el `container_name` de `_01_rsc_wpm_backend/docker-compose.yml`. Compose añade además el alias del servicio (`backend`), así que ambos resuelven dentro de la red; usa el nombre largo, que es el que aparece en el frontend, los scripts y la documentación, para no crear dos verdades.
+- **Puerto**: no es una constante. El mapeo es `"${PORT:-4001}:${PORT:-4001}"` — el mismo valor dentro y fuera — y el servidor escucha en `PORT`. `container-management.sh` exporta `PORT` desde el `./.env` de la raíz, así que con `PORT=5055` la URL interna pasa a `...:5055`. Un `docker compose up` directo no lee ese `.env` y cae a `4001`.
+- **No existe desde el host**: ese nombre solo resuelve dentro de la red Compose; desde la máquina es `http://localhost:${PORT}`.
+
+Léelo del contenedor vivo en lugar de deducirlo del fichero:
+
+```bash
+docker inspect 01_rsc_wpm_bun_psgres-backend \
+  --format '{{range $n,$c := .NetworkSettings.Networks}}{{$n}} aliases={{$c.Aliases}}{{"\n"}}{{end}}'
+docker exec 01_rsc_wpm_bun_psgres-backend printenv PORT
+```
+
+Lectura del 2026-10-22: red `01_rsc_wpm_backend_rsc-network`, IP `192.168.0.2`, `aliases=[01_rsc_wpm_bun_psgres-backend backend]`, `PORT=4001`, publicación `0.0.0.0:4001->4001/tcp`.
+
+El `3000/tcp` que muestra `docker ps` es un `EXPOSE` de la imagen: no está publicado y el servidor no escucha en él.
 
 ---
 
