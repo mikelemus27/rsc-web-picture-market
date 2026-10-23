@@ -775,3 +775,144 @@ still exist on the remote. This confirms §27/§31: the silent deletion comes fr
 ```bash
 gh api repos/mikelemus27/rsc-web-picture-market --jq '.delete_branch_on_merge'   # -> false
 ```
+
+### 40. Find the oldest *verified* state, not the oldest commit (2026-10-22)
+
+"Which ref holds the oldest version where the backend worked, the database was healthy and the tests
+were green?" is four separate questions, and a commit subject settles none of them:
+
+| Claim | What actually settles it |
+|---|---|
+| backend works | a suite run against the running API, with observed counts |
+| database healthy | an independent readiness check, or a DB-backed suite that fails on DB errors |
+| tests green | the command plus the observed pass/fail/assertion counts |
+| tests approved | a merge or a review — impossible before the repository's first merge commit |
+
+Everything below is read-only: no checkout, no ref moved, no working tree touched.
+
+**40.1 Inventory the refs with their dates**
+
+```bash
+git for-each-ref --sort=creatordate \
+  --format='%(creatordate:short)  tip=%(committerdate:short)  %(refname:short)  %(subject)' \
+  refs/heads refs/remotes
+git rev-list --all --count
+git --no-pager log --reverse --format='%h %ad %s' --date=short | head -3
+```
+
+`creatordate` is when the ref was created; `committerdate` is where its tip sits. They diverge on a
+long-lived branch. Here: first commit `109ddc6` on 2026-09-28, 383 commits, ~50 branches.
+
+**40.2 Date the moment "approved" becomes possible**
+
+```bash
+git --no-pager log --all --merges --date=short --pretty='%h %ad %s' | tail -45
+```
+
+`tail` of a newest-first log gives the oldest merge. That date bounds the whole question: here the
+first PR merge is #18 on 2026-10-06, so nothing older can be "approved" — before it, work landed
+directly on `main`. Run this early; it can turn the task from archaeology into reading PR history.
+
+**40.3 Find the fork point everything grew from**
+
+```bash
+git merge-base --is-ancestor main dev && echo "main is in dev's history"
+git show -s --format='%h %ad %s' --date=short "$(git merge-base main dev)"
+```
+
+A frozen default branch is usually the oldest stable candidate. Here `main` stopped at `89bc61f`
+(2026-10-02), and that commit is exactly `dev`'s fork point.
+
+**40.4 Read the record committed in that tree, never the commit message**
+
+```bash
+git ls-tree -r --name-only <sha> | grep -E 'ftd/|LEARNINGS/|test/'
+git show <sha>:02-DOCS/wiki/ftd/<record>.md
+```
+
+The only usable evidence is a document inside the same commit that states the commands and the
+observed output. `🧪 test(api): verify CRUD contracts across containers` is an intention, not proof.
+
+**40.5 Let contradictions eliminate candidates**
+
+Two records collided here: the 2026-09-30 one reported `4 pass` locally and `4 pass` in the
+container; the 2026-10-01 one documents the same suites failing with `GET /usuarios` → 500,
+`relation "usuario" does not exist` and an empty `psql \dt`. The earlier green was volume luck.
+**An older "green" that a later record contradicts is not green.**
+
+Accept a candidate only if all five hold:
+
+- the record names the exact commands;
+- it states the observed counts;
+- it verifies the database claim independently of the API suite;
+- every artifact it names exists in that tree;
+- nothing later contradicts it.
+
+**40.6 Check the tree carries what the record names**
+
+```bash
+git ls-tree -r --name-only <sha> | grep -E 'test/|docker-compose'
+git show <sha>:project-tools/container-management.sh | grep -n 'test-backend'
+```
+
+A record citing `test-backend --container` is worthless if the script at that commit has no such
+subcommand. Here both matched — that is what made `89bc61f` credible rather than merely plausible.
+
+**40.7 Say what the candidate does not have**
+
+```bash
+git --no-pager log --oneline <sha>..dev --date=short --pretty='%h %ad %s' | tail -10
+git grep -c '<known-secret>' <sha> -- .     # counts only; never print the value
+```
+
+An old verified state is old in every sense: `89bc61f` predates secrets mounts, the db-healthcheck
+script, rate limiting and CORS, and still tracks an `.env` carrying a credential literal. Report
+that before anyone adopts it as a baseline.
+
+**40.8 Check whether the answer is already recorded**
+
+```bash
+git branch -a --contains <sha>
+git tag --points-at <sha>
+git worktree list
+git ls-remote --tags origin
+```
+
+Here the work already existed: branch `26BGestPSBaseok/Dock-Bakc-Front-psg-verified-89bc61f` and the
+annotated tag `R-26BGestPSBaseok-verified-89bc61f`, at `89bc61f` + 2 minimal commits. Checking first
+saved redoing the archaeology and avoided moving a published ref.
+
+**40.9 Traps that cost time here**
+
+- **Two refs, one commit.** `main` and `origin/fix/create-user-test-status-codes-14` are the same
+  SHA. Compare `git rev-parse`, never names.
+- **`git branch <name>` on an existing name fails**, it does not update it:
+  `fatal: a branch named '<name>' already exists`. Look first with `git branch --list '<name>'`
+  and `git branch -a --contains <sha>`.
+- **A `+` prefix in `git branch --list`** means the branch is checked out in another worktree, and
+  it cannot be moved until that worktree is freed (`git worktree list`).
+- **A published marker is not yours to move.** Repointing it needs `--force-with-lease` and an
+  explicit decision; a second clean ref is the non-destructive alternative.
+- **Never narrate the answer from the `--merges` log alone.** It dates approval; it says nothing
+  about tests or the database.
+
+**40.10 If you must run the candidate, use a worktree**
+
+```bash
+git worktree add <repo>.worktrees/baseline-check <sha>   # detached; add -b <name> for a branch
+```
+
+Never check out an old baseline into the working tree you are developing in: it replaces the tree
+the session is reading, and the old Compose stack collides with the running one. Prove the live
+pieces separately:
+
+```bash
+docker ps --filter 'name=<container>' --format 'NAME={{.Names}} STATUS={{.Status}} PORTS={{.Ports}}'
+docker exec <container> printenv PORT
+```
+
+**Result here:** `main` @ `89bc61f` (2026-10-02) — same commit as
+`origin/fix/create-user-test-status-codes-14`, and `dev`'s fork point. 16 backend tests, a
+PostgreSQL readiness check on `/health`, 11 container API tests and 11 frontend tests, all recorded
+in that same commit. It is now also marked by the branch/tag pair above, so the archaeology does not
+need repeating.
