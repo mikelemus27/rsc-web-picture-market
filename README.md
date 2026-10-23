@@ -213,9 +213,8 @@ prior tree) and one caveat: **this is where development started, not a state tha
 |---|---|
 | tag `baseline/root-109ddc6` | `109ddc6` (root commit, 2026-09-28) |
 
-Unlike the verified baseline above, this tag exists only in the clone that created it;
-`git fetch --tags` will not bring it. It is trivially recreated, since the commit it points at never
-moves:
+Both markers are pushed to `origin`, so a single `git fetch --tags` brings them together. The root
+commit never moves, so the tag can also be recreated by hand:
 
 ```bash
 git tag -a baseline/root-109ddc6 109ddc6da7716d4655f2cac2f0b484767891e9ab
