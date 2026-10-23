@@ -139,6 +139,70 @@ project-tools/               # Container lifecycle, database health checks, and 
 └── rotate-db-secrets.sh     # Create/rotate the DB credentials in secrets/
 ```
 
+## Verified baseline (2026-10-02)
+
+The oldest state of this repository with a recorded, complete green run — backend serving,
+PostgreSQL healthy, API suites passing — is commit `89bc61f`. You do not need to re-derive it from
+history: it carries a branch and an annotated tag, both pushed to `origin`.
+
+| Ref | Resolves to |
+|---|---|
+| tag `R-26BGestPSBaseok-verified-89bc61f` | `9736339` |
+| branch `26BGestPSBaseok/Dock-Bakc-Front-psg-verified-89bc61f` | `9736339` |
+| baseline commit | `89bc61f` (2026-10-02); `9736339` is that commit plus two minimal adjustments |
+
+`89bc61f` is also the tip of `main` and the fork point of `dev`.
+
+### Locate it without walking the commit tree
+
+```bash
+git fetch --tags origin
+git tag --points-at 9736339                                   # R-26BGestPSBaseok-verified-89bc61f
+git rev-parse 'R-26BGestPSBaseok-verified-89bc61f^{commit}'    # -> 9736339…
+git log -1 --format='%h %ad %s' --date=short R-26BGestPSBaseok-verified-89bc61f
+git worktree add ../rsc-web-picture-market-worktrees/baseline-check \
+  R-26BGestPSBaseok-verified-89bc61f
+git show R-26BGestPSBaseok-verified-89bc61f:02-DOCS/wiki/ftd/container-api-integration-coverage.md
+```
+
+If a worktree already holds it, `git worktree list` shows where. Use a worktree rather than a
+checkout in a working copy: the baseline replaces the whole tree, and its Compose stack competes with
+the running one.
+
+### What it does
+
+- Backend API in Bun + TypeScript over `pg`, with controller/service/repository layers.
+- PostgreSQL with the `usuario` table created from the mounted init script for new volumes.
+- `GET /health`, which performs a real PostgreSQL connectivity check.
+- Backend suites: 5 handler unit tests and 11 API contract tests — 16 passing locally, 36 assertions.
+- Frontend API contract suite: 11 passing, 28 assertions, over the Compose network.
+- `project-tools/container-management.sh` with `start-all`, `stop-all`, `test-backend [--container]`,
+  `test-frontend`, `rebuild-all`, `remove-all` and `stop-running-containers`.
+- Its own verification record, committed alongside:
+  `02-DOCS/wiki/ftd/container-api-integration-coverage.md`.
+
+### What it does not have
+
+Everything below landed on `dev` after 2026-10-02, so treat the baseline as a reference snapshot, not
+as a substitute for the current branch:
+
+| Missing there | Arrived |
+|---|---|
+| `db-healthcheck.sh` | 2026-10-05 |
+| Docker Compose secrets and `rotate-db-secrets.sh` | 2026-10-07 |
+| PUT 400-vs-404 distinction | 2026-10-09 |
+| Rate limiting | 2026-10-13 |
+| CORS | 2026-10-15 |
+
+It also pins a fixed `4001` port instead of the current `PORT` single source, still ships
+`src/indexOld.ts` (dead code removed later), defines no GitHub Actions workflows, and has no
+pull-request review: the repository's first PR merge is 2026-10-06, so this state predates any
+approval workflow. Its green result rests on its own committed record, not on a review.
+
+**Treat its tracked `.env` as compromised.** The baseline commits a root `.env` and a Compose file
+carrying a credential literal; the later secrets work scrubbed them, and rewriting history does not
+rotate an exposed password.
+
 ## Further documentation
 
 | Document | Description |
