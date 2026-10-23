@@ -203,6 +203,29 @@ approval workflow. Its green result rests on its own committed record, not on a 
 carrying a credential literal; the later secrets work scrubbed them, and rewriting history does not
 rotate an exposed password.
 
+## Where development started (2026-09-28)
+
+The repository begins at the root commit `109ddc6`, tagged `baseline/root-109ddc6`. It is an
+annotated tag whose message records the commit identity, its scope (77 files, 8720 insertions, no
+prior tree) and one caveat: **this is where development started, not a state that worked.**
+
+| Ref | Resolves to |
+|---|---|
+| tag `baseline/root-109ddc6` | `109ddc6` (root commit, 2026-09-28) |
+
+Unlike the verified baseline above, this tag exists only in the clone that created it;
+`git fetch --tags` will not bring it. It is trivially recreated, since the commit it points at never
+moves:
+
+```bash
+git tag -a baseline/root-109ddc6 109ddc6da7716d4655f2cac2f0b484767891e9ab
+```
+
+The tree does not compile cleanly. Commits `f4f1bd5` and `172fbfe` repair import paths, body type
+assertions and the `POST /usuarios` status-code contract immediately afterwards, so read the root
+commit as the starting line, never as a rollback target. For a state that ran green, use the
+verified baseline above.
+
 ## Further documentation
 
 | Document | Description |
