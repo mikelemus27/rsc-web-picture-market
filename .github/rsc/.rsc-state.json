@@ -191,6 +191,12 @@
         "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/connect-tool"
       ],
       "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/connect-tool"
+    },
+    "design": {
+      "files": [
+        "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.github/rsc/design"
+      ],
+      "base": "/home/mgl/AI-Agents-Tests/rsc-harness/rsc-web-picture-market/.rsc/skills/design"
     }
   },
   "agents": [
@@ -238,7 +244,7 @@
     "verify"
   ],
   "commandCollisions": [],
-  "version": "3.0.22",
+  "version": "3.3.0",
   "ignoreEntriesAdded": [
     ".github/agents/developer.agent.md",
     ".github/agents/finding-verifier.agent.md",
@@ -268,6 +274,7 @@
     ".github/rsc/debug",
     ".github/rsc/decision-challenge",
     ".github/rsc/deprecation",
+    ".github/rsc/design",
     ".github/rsc/eli5",
     ".github/rsc/fable-operator",
     ".github/rsc/ftd",

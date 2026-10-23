@@ -28,6 +28,7 @@
     "debug",
     "decision-challenge",
     "deprecation",
+    "design",
     "fable-operator",
     "ftd",
     "git-workflow",
@@ -60,7 +61,7 @@
     "refuter-tests"
   ],
   "ownSkills": [],
-  "catalogVersion": "3.0.22",
+  "catalogVersion": "3.3.0",
   "tier": null,
   "optOuts": [],
   "onboarding": {
