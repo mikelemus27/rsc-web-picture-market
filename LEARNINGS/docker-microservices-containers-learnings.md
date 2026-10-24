@@ -309,7 +309,109 @@ rebuilding its image. The secret is not baked into the image and not visible in 
 
 ---
 
-## 8. Referencias
+## 8. Verifying an old commit: tests, database, secrets, and containers
+
+The commit pins **one** of four states. The other three are inherited from today, and they will answer the tests for it:
+
+| State | Pinned by the commit? | Where it actually comes from |
+|---|---|---|
+| Tree (code, Compose files, init SQL) | **yes** | the commit |
+| Image | no | built on demand, may reuse cache |
+| Volume (schema + rows) | no | whatever this machine last initialized |
+| Container names / network | no | the shared daemon namespace |
+
+Every trap below is one of those three inherited states answering a question you believe you asked the commit.
+
+### 8.1 Volume luck is the most common false green
+
+`initdb` runs **only when the data directory is empty**. `POSTGRES_PASSWORD`, `POSTGRES_PASSWORD_FILE` and `/docker-entrypoint-initdb.d/*.sql` are consumed exactly once, at that moment. Against an already-initialized volume they are inert text.
+
+Consequence: an old tree pointed at an existing volume reuses a schema it did not build. In this repository the 2026-09-30 record claimed `4 pass` locally and in the container; the 2026-10-01 record (`f406d1c`) shows `GET /usuarios` returning 500 with `relation "usuario" does not exist` and an empty `psql \dt`. Same code, opposite outcome: the earlier pass rested on a pre-existing volume.
+
+Rule: a schema the commit did not build is not evidence about the commit.
+
+Verification ritual:
+
+```bash
+docker compose -p <verify-project> config | head -5   # pin the project name first
+docker compose -p <verify-project> up -d --build
+docker volume ls | grep <verify-project>              # a NEW volume must appear
+curl -s localhost:4001/health                          # {"status":"ok"} is a real DB query
+```
+
+If the baseline stack attaches the development volume, stop. You are measuring today's schema.
+
+### 8.2 Tests that target a live port prove the process, not the commit
+
+Backend API suites in this repo are HTTP integration tests against `TEST_URL` / `API_URL`, defaulting to `localhost:4001`. If the dev stack is still running, that port belongs to **current** code. The suite reports today's health and you read it as historical.
+
+- `bun run test` here reaches the API suite; it is not a unit-only run.
+- `bun run test:unit` is the only server-free subset.
+- A "basic tests are enough" decision silently caps evidence at unit level: no database, no HTTP contract.
+
+Rule: the port decides the subject of the test. Free it or the result is about the wrong commit.
+
+### 8.3 `container_name` is global; the Compose project is not
+
+Setting `-p <project>` namespaces services, volumes and networks — but **not** an explicit `container_name`. In this repo `01_rsc_wpm_bun_psgres-backend` is hardcoded in both the baseline and the current Compose files, so the two stacks cannot coexist regardless of project name. The postgres service has no `container_name` in the baseline, so it *does* get a project-prefixed name.
+
+This asymmetry is the trap: half the stack namespaces cleanly, one container collides, and the failure surfaces as `port is already allocated` or `container name already in use` — messages that name the symptom, never the cause.
+
+### 8.4 Credentials: tracked files lie, history does not forget
+
+Three independent facts, each of which surprised someone here:
+
+1. **`.gitignore` never overrides tracking.** At `89bc61f` the root `.env` is tracked *and* its header reads `# Local .env — NOT committed (see .gitignore)`. It is committed. Removing it requires `git rm --cached .env`, and the file stays on disk.
+2. **A multi-pattern line is one pattern.** `.env .env.local .env.production` on a single line matches a filename containing spaces, not three files. Split into three lines.
+3. **Removing a secret from the tip does not un-expose it.** The value survives in every ancestor commit. Only **rotation** retires it. Tagging the cleaned tip makes the history *easier* to find, not safer.
+
+In this repository the baseline carries `POSTGRES_PASSWORD: admin123` directly in the Compose file, in a **public** repository. Removing `.env` alone is cosmetic: the literal remains in the file you would tag.
+
+`pg_dump` is per-database and carries **no roles**. `pg_dumpall --globals-only` does, as SCRAM hashes — restoring it silently re-imposes the old password.
+
+### 8.5 What a green is worth: five conditions
+
+An old commit's green counts only when all five hold:
+
+1. the record names the exact commands;
+2. it states the observed counts;
+3. the database claim is verified independently of the API suite;
+4. every artifact it names exists in that tree;
+5. nothing later contradicts it.
+
+Fail any one and the claim is a commit subject, not evidence. In this repo only `89bc61f` (2026-10-02) satisfies all five: 16/0/36 backend, 11/28 frontend, `/health` returning `{"status":"ok"}` from a real query, and no later contradiction.
+
+### 8.6 Measurement rule
+
+A tree you edited is a different subject. Editing before verifying converts the result into a statement about your edit. Order is fixed: **verify pristine, then harden**. The executable procedure lives in `planVerifyCommitBase.md` at the repo root.
+
+### 8.7 Tradeoffs, stated explicitly
+
+| Choice | Gains | Costs |
+|---|---|---|
+| Fresh volume | Proves the commit builds its own schema | Destroys rows; needs `down -v` |
+| Reuse the dev volume | Fast, keeps data | Re-creates volume luck; proves nothing |
+| Full suite (`test:all`) | Unit + API + DB contract | Requires the stack up |
+| Unit only | No infrastructure needed | Says nothing about the database or HTTP |
+| Pristine verification | Certifies the commit | Excludes the credential fixes you want |
+| Hardened branch | Removes current exposure | Certifies a different tree; history still exposed |
+| Compose literal | Simple, zero setup | Secret in a public repo |
+| `${VAR:?}` from `.env` | Secret stays untracked | Needs `--env-file ../.env` discipline |
+| `ALTER USER` | Keeps data | Runtime-only; not reproducible from the tree |
+| `down -v` | Reproducible from the tree | Irreversible |
+
+### 8.8 Pre-flight checklist
+
+- [ ] Compose project name pinned (`-p`), confirmed by `docker compose config`.
+- [ ] A **new** volume appears after `up`; the dev volume is untouched.
+- [ ] Port 4001/5432 were free before starting; the dev stack is stopped.
+- [ ] `git status --short` empty in the worktree before Phase D.
+- [ ] `/health` returns `{"status":"ok"}` before trusting any suite.
+- [ ] Test counts recorded verbatim, not summarized.
+- [ ] Any deviation written into the evidence file, including local edits.
+- [ ] Tag name states what it is *not*: outside `baseline/`, unlike `R-…-verified-…`.
+
+## 9. Referencias
 
 - `local://docker-compose-dev-vs-prod-plan.md` (plan aprobado, idéntico contenido).
 - `local://paste-1.md` (tutorial original — cubre `ConnectionRefused`, `docker compose run`, `.env`/red). Las secciones anteriores preservan resultados históricos; la sección 6 registra el flujo actual verificado.
