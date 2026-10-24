@@ -365,6 +365,83 @@ Traps:
 - **Ask the right source.** `git tag --points-at <sha>` answers about your clone; `git ls-remote`
   answers about the server.
 
+### 17.2 Where worktrees live: convention, blast radius, and the cost of improvisation
+
+Three locations are in play in this repository. Only two of them are intentional.
+
+| Location | Declared by | Ignored by git | State here |
+|---|---|---|---|
+| `.worktrees/<branch>` (inside the repo) | `AGENTS.md:33` (rsc harness) | `.gitignore:774` (`.worktrees/`) | absent |
+| `<repo>.worktrees/<name>` (sibling) | §40.10 of this file | outside the tree, so never a candidate | two live worktrees |
+| `/tmp/...` or any ad-hoc path | nothing | n/a | one **prunable** registration |
+
+A *sibling* is a directory next to the repository, sharing its parent, not inside its working
+tree:
+
+```text
+rsc-harness/
+├── rsc-web-picture-market/              repo: one working tree
+exited 0
+└── rsc-web-picture-market.worktrees/    sibling checkouts
+    ├── baseline-check/                  9736339
+    └── hi/                              b91116f
+```
+
+Both are the **same repository**: one object store, one set of refs, one fetch. That is what
+separates a worktree from a clone.
+
+**What a worktree buys over the alternatives**
+
+- Parallel checkouts of one repository: build branch A while branch B stays checked out.
+- No duplicated objects, no second `.git`, no second `origin` to keep in sync — the failure mode
+  §17 warns about (`the second clone needs its own fetch and drifts`) cannot occur.
+- One inventory: `git worktree list` answers where every checkout is, including which branch each
+  holds.
+
+**What it costs — the parts `.gitignore` does not fix**
+
+Ignoring `.worktrees/` removes the *commit* risk and nothing else:
+
+- **`git clean -xfd` targets ignored paths.** An in-repo `.worktrees/` sits inside that blast
+  radius. Whether the command stops at each worktree's `.git` *file* is version-dependent; do not
+  bet uncommitted work on it. `git clean -Xfd` (ignored only) is even more direct.
+- **Recursive tools that ignore `.gitignore`** — some indexers, watchers, bundlers, backup jobs —
+  traverse duplicate trees and produce duplicate matches. A search that returns the same symbol from
+  three checkouts is a slow way to edit the wrong one.
+- **Nested `.git` files confuse repo-root detection.** Tools that probe for a repository can report
+  a worktree as the root of its own project.
+- **Backups, `rsync --delete`, and plain `cp -r` of the repo duplicate every checkout** unless the
+  path is excluded outside git as well.
+- **A worktree cannot check out a branch already checked out elsewhere**:
+  `fatal: '<branch>' is already checked out at '<path>'`. This is the most common surprise when
+  reusing a path.
+- **Deleting a worktree directory leaves a dead registration.** `git worktree list` then prints a
+  `prunable` entry pointing at a path that no longer exists — exactly the `/tmp/opencode/wt-gov`
+  case above, left by a checkout nobody can find.
+- **Long-lived worktrees drift.** Each has its own working tree but shares refs, so a worktree left
+  alone for weeks has a stale index and stale untracked files; re-fetch before interpreting it (§17).
+- **An index is per-checkout.** A code index built for one worktree does not describe another: its
+  root and its checked-out bytes differ. Never copy or symlink an index between checkouts.
+
+**Rules**
+
+1. Pick one convention per repository and write it down. Mixing in-repo, sibling, and `/tmp` paths
+   is how the prunable entry above happened.
+2. The harness default is `.worktrees/<branch>`; the sibling pattern is the one this repository
+   already uses. Either is acceptable — decide once, not per task.
+3. Never place a worktree under `/tmp` or any directory a reboot or cleaner may reclaim.
+4. Remove with `git worktree remove <path>` (refuses when dirty) rather than deleting the directory.
+   Run `git worktree prune` only deliberately: it drops every registration whose directory is gone,
+   including ones another session may still reference.
+5. Check `git worktree list` before claiming a clean tree or reusing a path.
+
+```bash
+git worktree list                                   # inventory: path, HEAD, branch
+git worktree add --detach <path> <sha>              # read-only verification checkout
+git worktree add -b <new-branch> <path> <start>     # worktree with a branch
+git worktree remove <path>                          # refuses if dirty
+```
+
 ## B. GitHub Actions
 
 ### 18. Never infer CI behaviour from an absence of runs
