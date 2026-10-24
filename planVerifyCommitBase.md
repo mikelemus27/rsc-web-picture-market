@@ -462,3 +462,40 @@ docker network inspect verify-base-89bc61f_rsc-network
 | `pg_restore --clean` | untouched | objects dropped and reloaded | no, unless you dumped first |
 
 **Never** run `docker volume rm` or `down -v` against `01_rsc_wpm_backend_postgres_data` — that is your dev database, not the baseline's.
+
+---
+
+## Appendix B - Lineage of the recorded green versus the branch tip
+
+The baseline branch does not point at the commit that carries the recorded green. It points two commits later.
+
+```
+9736339  (branch tip)  <- 084bfde <- 89bc61f  (recorded green)
+```
+
+Ancestry check (`0` means the tip descends from the verified commit):
+
+```bash
+git merge-base --is-ancestor 89bc61f 9736339 && echo ancestor
+```
+
+Both later commits are dated 2026-10-22, three weeks after the baseline, and together add exactly two lines:
+
+| commit | subject | content added |
+| --- | --- | --- |
+| `084bfde` | `tst 100%;(2) running ok` | one YAML comment in `_01_rsc_wpm_backend/docker-compose.yml`: `#API_URL=http://01_rsc_wpm_bun_psgres-backend:4001` |
+| `9736339` | `runinn ok` | new file `_02_rsc_wp_frontend/env_copy` holding `API_URL=http://01_rsc_wpm_bun_psgres-backend:4001`, no trailing newline |
+
+### Why it matters for the verification
+
+- Behaviour is unchanged: a YAML comment is inert to Compose, and `env_copy` is not a dotfile, so nothing auto-loads it (`.env` is what Docker Compose and Bun load automatically). Neither commit touches build, runtime, or schema.
+- The evidence is not there: the recorded green (FTD record, `16/0/36` backend and `11/28` frontend) was produced at `89bc61f`. Neither later commit adds or updates an evidence file; their subjects assert results with no supporting record.
+- Therefore this runbook verifies `89bc61f`, the commit whose evidence can be read. The branch tip is a convenience smoke target (an already-materialised worktree), never a certificate.
+
+### Re-checking the lineage
+
+```bash
+git merge-base --is-ancestor 89bc61f 9736339 && echo ancestor
+git log --oneline 89bc61f..9736339
+git diff --stat 89bc61f 9736339
+```
